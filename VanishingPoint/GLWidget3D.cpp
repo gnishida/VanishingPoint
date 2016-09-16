@@ -220,13 +220,13 @@ void GLWidget3D::paintEvent(QPaintEvent *event) {
 	painter.setOpacity(1.0f);
 	for (auto line : lines) {
 		if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_LEFT) {
-			painter.setPen(QPen(QColor(0, 0, 255), 3, Qt::SolidLine, Qt::RoundCap));
+			painter.setPen(QPen(QColor(0, 0, 128), 3, Qt::SolidLine, Qt::RoundCap));
 		}
 		else if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_RIGHT) {
-			painter.setPen(QPen(QColor(255, 0, 0), 3, Qt::SolidLine, Qt::RoundCap));
+			painter.setPen(QPen(QColor(0, 0, 255), 3, Qt::SolidLine, Qt::RoundCap));
 		}
 		else {
-			painter.setPen(QPen(QColor(0, 255, 0), 3, Qt::SolidLine, Qt::RoundCap));
+			painter.setPen(QPen(QColor(128, 128, 255), 3, Qt::SolidLine, Qt::RoundCap));
 		}
 		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
 	}
@@ -235,6 +235,12 @@ void GLWidget3D::paintEvent(QPaintEvent *event) {
 	painter.setPen(QPen(QColor(255, 255, 0), 1, Qt::SolidLine));
 	painter.setBrush(QBrush(QColor(255, 255, 0)));
 	painter.drawEllipse(origin.x - 3, origin.y - 3, 7, 7);
+
+	// draw the center of the building
+	glm::vec2 pp = vp::projectPoint(camera.mvpMatrix, glm::dvec3(0, 0, 0));
+	painter.setPen(QPen(QColor(255, 0, 0), 1, Qt::SolidLine));
+	painter.setBrush(QBrush(QColor(255, 0, 0)));
+	painter.drawEllipse((pp.x + 1) * 0.5 * width() - 3, (1 - pp.y) * 0.5 * height() - 3, 7, 7);
 
 	painter.end();
 
@@ -685,10 +691,10 @@ void GLWidget3D::computeVanishingPoint() {
 
 void GLWidget3D::computeCameraMatrix() {
 	// rotate the image and lines so that the building stands exactly upright
-	rotateAll();
+	//rotateAll();
 
 	// center the image and lines
-	centerAll();
+	//centerAll();
 
 	std::vector<glm::dvec2> vps;
 	vp::computeVanishingPoints(lines, vps);
@@ -767,7 +773,8 @@ void GLWidget3D::centerAll() {
 
 void GLWidget3D::updateGeometry() {
 	std::vector<Vertex> vertices;
-	glutils::drawBox(cuboid_size[0], cuboid_size[1], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(cuboid_size[0] * 0.5, cuboid_size[1] * 0.5, cuboid_size[2] * 0.5)), vertices);
+	//glutils::drawBox(cuboid_size[0], cuboid_size[1], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(cuboid_size[0] * 0.5, cuboid_size[1] * 0.5, cuboid_size[2] * 0.5)), vertices);
+	glutils::drawBox(cuboid_size[0], cuboid_size[1], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), vertices);
 	renderManager.removeObjects();
 	renderManager.addObject("box", "", vertices, true);
 }

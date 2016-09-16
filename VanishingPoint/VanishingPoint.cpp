@@ -100,6 +100,10 @@ namespace vp {
 		T = OP1 * (camera_ditance / f);
 	}
 
+	/**
+	 * Return the projected point of the specified 3d point onto the image plane.
+	 * Note that the coordinates of the projected point is normalized to [-1, 1].
+	 */
 	glm::dvec2 projectPoint(const glm::dmat4& mvpMatrix, const glm::dvec3& p) {
 		glm::dvec4 pp = mvpMatrix * glm::dvec4(p, 1);
 		return glm::dvec2(pp.x / pp.w, pp.y / pp.w);
