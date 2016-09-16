@@ -26,6 +26,7 @@ public slots:
 	void onUndo();
 	void onComputeVanishingPoint();
 	void onComputeCameraMatrix();
+	void onCentering();
 
 private:
 	Ui::MainWindowClass ui;

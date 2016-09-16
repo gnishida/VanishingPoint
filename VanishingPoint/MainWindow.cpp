@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionUndo, SIGNAL(triggered()), this, SLOT(onUndo()));
 	connect(ui.actionComputeVanishingPoint, SIGNAL(triggered()), this, SLOT(onComputeVanishingPoint()));
 	connect(ui.actionComputeCameraMatrix, SIGNAL(triggered()), this, SLOT(onComputeCameraMatrix()));
+	connect(ui.actionCentering, SIGNAL(triggered()), this, SLOT(onCentering()));
 
 	glWidget = new GLWidget3D(this);
 	this->setCentralWidget(glWidget);
@@ -67,4 +68,10 @@ void MainWindow::onComputeVanishingPoint() {
 
 void MainWindow::onComputeCameraMatrix() {
 	glWidget->computeCameraMatrix();
+	glWidget->update();
+}
+
+void MainWindow::onCentering() {
+	glWidget->centerAll();
+	glWidget->update();
 }

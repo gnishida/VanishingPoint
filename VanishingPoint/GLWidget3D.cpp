@@ -20,7 +20,7 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 	cuboid_size[0] = 20;
 	cuboid_size[1] = 20;
 	cuboid_size[2] = 10;
-	image_offset = glm::vec2(0, 0);
+	image_offset = glm::dvec2(0, 0);
 
 	// This is necessary to prevent the screen overdrawn by OpenGL
 	setAutoFillBackground(false);
@@ -570,6 +570,7 @@ void GLWidget3D::render() {
 void GLWidget3D::loadImage(const QString& filename) {
 	image.load(filename);
 
+	// scale the image such that it fits to the window
 	float scale = std::min((float)width() / image.width(), (float)height() / image.height());
 	QImage newImage = image.scaled(image.width() * scale, image.height() * scale);
 
@@ -577,6 +578,9 @@ void GLWidget3D::loadImage(const QString& filename) {
 	QPainter painter(&image);
 	painter.fillRect(0, 0, image.width(), image.height(), QBrush(QColor(255, 255, 255)));
 	painter.drawImage((width() - newImage.width()) / 2, (height() - newImage.height()) / 2, newImage);
+
+	// clear the image offset
+	image_offset = glm::dvec2(0, 0);
 
 	update();
 }
@@ -680,6 +684,12 @@ void GLWidget3D::computeVanishingPoint() {
 }
 
 void GLWidget3D::computeCameraMatrix() {
+	// rotate the image and lines so that the building stands exactly upright
+	rotateAll();
+
+	// center the image and lines
+	centerAll();
+
 	std::vector<glm::dvec2> vps;
 	vp::computeVanishingPoints(lines, vps);
 
@@ -715,6 +725,44 @@ void GLWidget3D::computeCameraMatrix() {
 
 	updateStatusBar();
 	update();
+}
+
+void GLWidget3D::rotateAll() {
+
+}
+
+void GLWidget3D::centerAll() {
+	// compute the bounding box of lines
+	double x1 = std::numeric_limits<double>::max();
+	double x2 = -std::numeric_limits<double>::max();
+	double y1 = std::numeric_limits<double>::max(); 
+	double y2 = -std::numeric_limits<double>::max();
+	for (auto line : lines) {
+		if (line.start.x < x1) x1 = line.start.x;
+		if (line.end.x < x1) x1 = line.end.x;
+		if (line.start.y < y1) y1 = line.start.y;
+		if (line.end.y < y1) y1 = line.end.y;
+		if (line.start.x > x2) x2 = line.start.x;
+		if (line.end.x > x2) x2 = line.end.x;
+		if (line.start.y > y2) y2 = line.start.y;
+		if (line.end.y > y2) y2 = line.end.y;
+	}
+	if (origin.x < x1) x1 = origin.x;
+	if (origin.y < y1) y1 = origin.y;
+	if (origin.x > x2) x2 = origin.x;
+	if (origin.y > y2) y2 = origin.y;
+
+	// compute the offset of the image
+	glm::dvec2 offset = glm::dvec2(width() * 0.5 - (x1 + x2) * 0.5, height() * 0.5 - (y1 + y2) * 0.5);
+	image_offset += offset;
+	std::cout << glm::to_string(image_offset) << std::endl;
+
+	// shift the lines and origin
+	for (int i = 0; i < lines.size(); ++i) {
+		lines[i].start += offset;
+		lines[i].end += offset;
+	}
+	origin += offset;
 }
 
 void GLWidget3D::updateGeometry() {
