@@ -35,6 +35,8 @@ void MainWindow::onOpenImage() {
 	if (filename.isEmpty()) return;
 
 	glWidget->loadImage(filename);
+
+	this->setWindowTitle("Vanishing Point - " + filename);
 }
 
 void MainWindow::onClearLines() {

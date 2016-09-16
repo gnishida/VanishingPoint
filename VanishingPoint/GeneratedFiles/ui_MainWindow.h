@@ -104,7 +104,7 @@ public:
 
     void retranslateUi(QMainWindow *MainWindowClass)
     {
-        MainWindowClass->setWindowTitle(QApplication::translate("MainWindowClass", "MainWindow", 0));
+        MainWindowClass->setWindowTitle(QApplication::translate("MainWindowClass", "Vanishing Point", 0));
         actionExit->setText(QApplication::translate("MainWindowClass", "Exit", 0));
         actionOpenImage->setText(QApplication::translate("MainWindowClass", "Open Image", 0));
         actionOpenImage->setShortcut(QApplication::translate("MainWindowClass", "Ctrl+O", 0));
