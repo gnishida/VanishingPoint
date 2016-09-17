@@ -73,6 +73,10 @@ void GLWidget3D::mousePressEvent(QMouseEvent *e) {
  * This event handler is called when the mouse release events occur.
  */
 void GLWidget3D::mouseReleaseEvent(QMouseEvent *e) {
+	// remove the line if it is just a point
+	if (lines.size() > 0 && lines.back().start == lines.back().end) {
+		lines.pop_back();
+	}
 }
 
 /**
@@ -100,7 +104,7 @@ void GLWidget3D::mouseMoveEvent(QMouseEvent *e) {
 }
 
 void GLWidget3D::wheelEvent(QWheelEvent* e) {
-	camera.zoom(e->delta() * 0.05, (ctrlPressed ? 0.1 : 1), width(), height());
+	camera.changeFov(e->delta() * 0.05, (ctrlPressed ? 0.1 : 1), width(), height());
 	/*
 	camera.fovy += e->delta() * 0.1;
 	camera.pos.z = cameraDistanceBase / tanf((float)camera.fovy * 0.5 / 180.0f * M_PI);
@@ -157,7 +161,7 @@ void GLWidget3D::initializeGL() {
 
 	glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "tex0"), 0);//tex0: 0
 
-	camera.zoom(0, 1, width(), height());
+	camera.changeFov(0, 1, width(), height());
 
 
 
@@ -220,13 +224,13 @@ void GLWidget3D::paintEvent(QPaintEvent *event) {
 	painter.setOpacity(1.0f);
 	for (auto line : lines) {
 		if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_LEFT) {
-			painter.setPen(QPen(QColor(0, 0, 128), 3, Qt::SolidLine, Qt::RoundCap));
+			painter.setPen(QPen(QColor(0, 0, 192), 3, Qt::SolidLine, Qt::RoundCap));
 		}
 		else if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_RIGHT) {
-			painter.setPen(QPen(QColor(0, 0, 255), 3, Qt::SolidLine, Qt::RoundCap));
+			painter.setPen(QPen(QColor(64, 64, 255), 3, Qt::SolidLine, Qt::RoundCap));
 		}
 		else {
-			painter.setPen(QPen(QColor(128, 128, 255), 3, Qt::SolidLine, Qt::RoundCap));
+			painter.setPen(QPen(QColor(140, 140, 255), 3, Qt::SolidLine, Qt::RoundCap));
 		}
 		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
 	}
@@ -612,7 +616,11 @@ void GLWidget3D::loadLines(const QString& filename) {
 				origin = glm::dvec2(list[0].toFloat(), list[1].toFloat());
 			}
 			else {
-				lines.push_back(vp::VanishingLine(list[0].toFloat(), list[1].toFloat(), list[2].toFloat(), list[3].toFloat(), list[4].toFloat()));
+				glm::dvec2 start(list[0].toFloat(), list[1].toFloat());
+				glm::dvec2 end(list[2].toFloat(), list[3].toFloat());
+				if (start != end) {
+					lines.push_back(vp::VanishingLine(start.x, start.y, end.x, end.y, list[4].toInt()));
+				}
 			}
 		}
 

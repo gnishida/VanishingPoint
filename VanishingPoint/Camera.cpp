@@ -43,13 +43,12 @@ void Camera::rotateAroundZ(int mouse_x, int mouse_y, float senstivity) {
 /**
  * Call this function whenever the mouse moves while zooming.
  */
-/*
 void Camera::zoom(float delta) {
 	pos.z -= delta;
 	updateMVPMatrix();
 }
-*/
-void Camera::zoom(float delta, float senstivity, int width, int height) {
+
+void Camera::changeFov(float delta, float senstivity, int width, int height) {
 	fovy += delta * senstivity;
 	if (fovy < 5) fovy = 5;
 	if (fovy > 110) fovy = 110;
@@ -95,10 +94,11 @@ void Camera::updatePMatrix(int width,int height) {
 void Camera::updateMVPMatrix() {
 	// create model view matrix
 	mvMatrix = glm::mat4();
-	mvMatrix = glm::rotate(mvMatrix, zrot * (float)M_PI / 180.0f, glm::vec3(0, 0, 1));	// rotate around the viewing direction instead of Z axis
+	//mvMatrix = glm::rotate(mvMatrix, zrot * (float)M_PI / 180.0f, glm::vec3(0, 0, 1));	// rotate around the viewing direction instead of Z axis
 	mvMatrix = glm::translate(mvMatrix, -pos);
 	mvMatrix = glm::rotate(mvMatrix, xrot * (float)M_PI / 180.0f, glm::vec3(1, 0, 0));
 	mvMatrix = glm::rotate(mvMatrix, yrot * (float)M_PI / 180.0f, glm::vec3(0, 1, 0));
+	mvMatrix = glm::rotate(mvMatrix, zrot * (float)M_PI / 180.0f, glm::vec3(0, 0, 1));
 
 	// create model view projection matrix
 	mvpMatrix = pMatrix * mvMatrix;

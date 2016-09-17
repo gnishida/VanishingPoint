@@ -10,8 +10,8 @@ public:
 	void mousePress(int mouse_x, int mouse_y);
 	void rotate(int mouse_x, int mouse_y, float senstivity);
 	void rotateAroundZ(int mouse_x, int mouse_y, float senstivity);
-	//void zoom(float delta);
-	void zoom(float delta, float senstivity, int width, int height);
+	void zoom(float delta);
+	void changeFov(float delta, float senstivity, int width, int height);
 	void move(int mouse_x, int mouse_y);
 	void updatePMatrix(int width,int height);
 	void updateMVPMatrix();

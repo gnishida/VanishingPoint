@@ -20,9 +20,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 	this->setCentralWidget(glWidget);
 }
 
-MainWindow::~MainWindow() {
-}
-
 void MainWindow::keyPressEvent(QKeyEvent* e) {
 	glWidget->keyPressEvent(e);
 }
