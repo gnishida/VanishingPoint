@@ -1,4 +1,5 @@
 #include "VanishingPoint.h"
+#include <glm/gtx/string_cast.hpp>
 
 namespace vp {
 
@@ -98,6 +99,59 @@ namespace vp {
 
 		// compute T
 		T = OP1 * (camera_ditance / f);
+	}
+
+	void extractCameraMatrixByThreeVPs(const std::vector<glm::dvec2>& vps, glm::dmat3& K, glm::dmat3& R) {
+		// compute the focal length by Eq (18)
+		// Note: Eq (18) is incorrect.
+		//       The correct form is f = sqrt(| (V_1 - O_i) \dot (V_2 - O_i) |)
+		double f = sqrt(abs(glm::dot(vps[0], vps[1])));
+
+		// recover the intrinsic matrix by Eq (12)
+		K = glm::dmat3();
+		K[0][0] = f;
+		K[1][1] = f;
+		K[2][2] = 1;
+
+		// recover the rotation matrix by Eq (15)
+		cv::Mat_<double> A(5, 2);
+		for (int i = 0; i < 2; ++i) {
+			A(0, i) = vps[i].x * vps[i].x - vps[2].x * vps[2].x;
+			A(1, i) = vps[i].y * vps[i].y - vps[2].y * vps[2].y;
+			A(2, i) = vps[i].x * vps[i].y - vps[2].x * vps[2].y;
+			A(3, i) = vps[i].x - vps[2].x;
+			A(4, i) = vps[i].y - vps[2].y;
+		}
+		cv::Mat_<double> b(5, 1);
+		b(0, 0) = f * f - vps[2].x * vps[2].x;
+		b(1, 0) = f * f - vps[2].y * vps[2].y;
+		b(2, 0) = -vps[2].x * vps[2].y;
+		b(3, 0) = -vps[2].x;
+		b(4, 0) = -vps[2].y;
+
+		cv::Mat x = A.inv(cv::DECOMP_SVD) * b;
+		//std::cout << x << std::endl;
+
+		float lmdb[3];
+		lmdb[0] = sqrt(x.at<double>(0, 0));
+		lmdb[1] = sqrt(x.at<double>(1, 0));
+		lmdb[2] = sqrt(1 - x.at<double>(0, 0) - x.at<double>(1, 0));
+
+		glm::dmat3 KR;
+		KR[2][0] = -vps[0].x * lmdb[0];
+		KR[2][1] = -vps[0].y * lmdb[0];
+		KR[2][2] = -lmdb[0];
+		KR[0][0] = vps[1].x * lmdb[1];
+		KR[0][1] = vps[1].y * lmdb[1];
+		KR[0][2] = lmdb[1];
+		KR[1][0] = vps[2].x * lmdb[1];
+		KR[1][1] = vps[2].y * lmdb[1];
+		KR[1][2] = lmdb[2];
+
+		R = glm::inverse(K) * KR;
+		for (int i = 0; i < 3; ++i) {
+			R[i][2] = -R[i][2];
+		}
 	}
 
 	/**

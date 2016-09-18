@@ -713,15 +713,29 @@ void GLWidget3D::computeCameraMatrix() {
 		vps[i].y = 1 - vps[i].y / height() * 2.0;
 	}
 	
+	std::cout << "vp[0]" << glm::to_string(vps[0]) << std::endl;
+	std::cout << "vp[1]" << glm::to_string(vps[1]) << std::endl;
+	std::cout << "vp[2]" << glm::to_string(vps[2]) << std::endl;
+
 	// compute K and R matrices
 	glm::dmat3 K, R;
 	vp::extractCameraMatrix(vps, K, R);
 	std::cout << "K: " << glm::to_string(K) << std::endl;
 	std::cout << "R: " << glm::to_string(R) << std::endl;
+	std::cout << "KR: " << glm::to_string(K * R) << std::endl;
+
+
+	glm::dmat3 K2, R2;
+	vp::extractCameraMatrixByThreeVPs(vps, K2, R2);
+	std::cout << "K2: " << glm::to_string(K2) << std::endl;
+	std::cout << "R2: " << glm::to_string(R2) << std::endl;
+
+
+
 	double f = K[0][0];
 	camera.fovy = vp::rad2deg(atan2(1.0, f) * 2);
 	double xrot, yrot, zrot;
-	vp::decomposeRotation(R, xrot, yrot, zrot);
+	vp::decomposeRotation(R2, xrot, yrot, zrot);
 	camera.xrot = vp::rad2deg(xrot);
 	camera.yrot = vp::rad2deg(yrot);
 	camera.zrot = vp::rad2deg(zrot);
