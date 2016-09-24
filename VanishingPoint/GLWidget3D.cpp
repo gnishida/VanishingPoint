@@ -20,7 +20,11 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 	cuboid_size[0] = 20;
 	cuboid_size[1] = 20;
 	cuboid_size[2] = 10;
-	image_offset = glm::dvec2(0, 0);
+
+	contourLineWidth = 3;
+	horizontalLeftColor = QColor(0, 0, 192);
+	horizontalRightColor = QColor(64, 64, 255);
+	verticalColor = QColor(140, 140, 255);
 
 	// This is necessary to prevent the screen overdrawn by OpenGL
 	setAutoFillBackground(false);
@@ -91,7 +95,7 @@ void GLWidget3D::mouseMoveEvent(QMouseEvent *e) {
 			camera.rotate(e->x(), e->y(), (ctrlPressed ? 0.1 : 1));
 		}
 	}
-	else if (e->buttons() & Qt::MidButton) { // rotate around viewing direction
+	else if (e->buttons() & Qt::MidButton) { // rotate around Z axis
 		camera.rotateAroundZ(e->x(), e->y(), (ctrlPressed ? 0.1 : 1));
 	}
 	else if (e->buttons() & Qt::LeftButton) { // draw lines
@@ -105,11 +109,6 @@ void GLWidget3D::mouseMoveEvent(QMouseEvent *e) {
 
 void GLWidget3D::wheelEvent(QWheelEvent* e) {
 	camera.changeFov(e->delta() * 0.05, (ctrlPressed ? 0.1 : 1), width(), height());
-	/*
-	camera.fovy += e->delta() * 0.1;
-	camera.pos.z = cameraDistanceBase / tanf((float)camera.fovy * 0.5 / 180.0f * M_PI);
-	camera.updatePMatrix(width(), height());
-	*/
 	updateStatusBar();
 	update();
 }
@@ -218,19 +217,19 @@ void GLWidget3D::paintEvent(QPaintEvent *event) {
 	// draw background image
 	QPainter painter(this);
 	painter.setOpacity(0.5f);
-	painter.drawImage(image_offset.x, image_offset.y, image);
+	painter.drawImage(0, 0, image);
 
 	// draw lines
 	painter.setOpacity(1.0f);
 	for (auto line : lines) {
 		if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_LEFT) {
-			painter.setPen(QPen(QColor(0, 0, 192), 3, Qt::SolidLine, Qt::RoundCap));
+			painter.setPen(QPen(horizontalLeftColor, contourLineWidth));
 		}
 		else if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_RIGHT) {
-			painter.setPen(QPen(QColor(64, 64, 255), 3, Qt::SolidLine, Qt::RoundCap));
+			painter.setPen(QPen(horizontalRightColor, contourLineWidth));
 		}
 		else {
-			painter.setPen(QPen(QColor(140, 140, 255), 3, Qt::SolidLine, Qt::RoundCap));
+			painter.setPen(QPen(verticalColor, contourLineWidth));
 		}
 		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
 	}
@@ -589,9 +588,6 @@ void GLWidget3D::loadImage(const QString& filename) {
 	painter.fillRect(0, 0, image.width(), image.height(), QBrush(QColor(255, 255, 255)));
 	painter.drawImage((width() - newImage.width()) / 2, (height() - newImage.height()) / 2, newImage);
 
-	// clear the image offset
-	image_offset = glm::dvec2(0, 0);
-
 	update();
 }
 
@@ -698,12 +694,6 @@ void GLWidget3D::computeVanishingPoint() {
 }
 
 void GLWidget3D::computeCameraMatrix() {
-	// rotate the image and lines so that the building stands exactly upright
-	//rotateAll();
-
-	// center the image and lines
-	//centerAll();
-
 	std::vector<glm::dvec2> vps;
 	vp::computeVanishingPoints(lines, vps);
 
@@ -724,18 +714,15 @@ void GLWidget3D::computeCameraMatrix() {
 	std::cout << "R: " << glm::to_string(R) << std::endl;
 	std::cout << "KR: " << glm::to_string(K * R) << std::endl;
 
-
 	glm::dmat3 K2, R2;
 	vp::extractCameraMatrixByThreeVPs(vps, K2, R2);
 	std::cout << "K2: " << glm::to_string(K2) << std::endl;
 	std::cout << "R2: " << glm::to_string(R2) << std::endl;
 
-
-
 	double f = K[0][0];
 	camera.fovy = vp::rad2deg(atan2(1.0, f) * 2);
 	double xrot, yrot, zrot;
-	vp::decomposeRotation(R2, xrot, yrot, zrot);
+	vp::decomposeRotation(R, xrot, yrot, zrot);
 	camera.xrot = vp::rad2deg(xrot);
 	camera.yrot = vp::rad2deg(yrot);
 	camera.zrot = vp::rad2deg(zrot);
@@ -755,48 +742,10 @@ void GLWidget3D::computeCameraMatrix() {
 	update();
 }
 
-void GLWidget3D::rotateAll() {
-
-}
-
-void GLWidget3D::centerAll() {
-	// compute the bounding box of lines
-	double x1 = std::numeric_limits<double>::max();
-	double x2 = -std::numeric_limits<double>::max();
-	double y1 = std::numeric_limits<double>::max(); 
-	double y2 = -std::numeric_limits<double>::max();
-	for (auto line : lines) {
-		if (line.start.x < x1) x1 = line.start.x;
-		if (line.end.x < x1) x1 = line.end.x;
-		if (line.start.y < y1) y1 = line.start.y;
-		if (line.end.y < y1) y1 = line.end.y;
-		if (line.start.x > x2) x2 = line.start.x;
-		if (line.end.x > x2) x2 = line.end.x;
-		if (line.start.y > y2) y2 = line.start.y;
-		if (line.end.y > y2) y2 = line.end.y;
-	}
-	if (origin.x < x1) x1 = origin.x;
-	if (origin.y < y1) y1 = origin.y;
-	if (origin.x > x2) x2 = origin.x;
-	if (origin.y > y2) y2 = origin.y;
-
-	// compute the offset of the image
-	glm::dvec2 offset = glm::dvec2(width() * 0.5 - (x1 + x2) * 0.5, height() * 0.5 - (y1 + y2) * 0.5);
-	image_offset += offset;
-	std::cout << glm::to_string(image_offset) << std::endl;
-
-	// shift the lines and origin
-	for (int i = 0; i < lines.size(); ++i) {
-		lines[i].start += offset;
-		lines[i].end += offset;
-	}
-	origin += offset;
-}
-
 void GLWidget3D::updateGeometry() {
 	std::vector<Vertex> vertices;
-	//glutils::drawBox(cuboid_size[0], cuboid_size[1], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(cuboid_size[0] * 0.5, cuboid_size[1] * 0.5, cuboid_size[2] * 0.5)), vertices);
 	glutils::drawBox(cuboid_size[0], cuboid_size[1], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), vertices);
+	//glutils::drawCylinderZ(cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, -cuboid_size[2] * 0.5)), vertices);
 	renderManager.removeObjects();
 	renderManager.addObject("box", "", vertices, true);
 }
@@ -834,19 +783,27 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		update();
 		break;
 	case Qt::Key_Left:
-		image_offset.x -= (ctrlPressed ? 1 : 10);
+		camera.pos.x += (ctrlPressed ? 0.1 : 1);
+		camera.updateMVPMatrix();
+		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Right:
-		image_offset.x += (ctrlPressed ? 1 : 10);
+		camera.pos.x -= (ctrlPressed ? 0.1 : 1);
+		camera.updateMVPMatrix();
+		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Up:
-		image_offset.y -= (ctrlPressed ? 1 : 10);
+		camera.pos.y -= (ctrlPressed ? 0.1 : 1);
+		camera.updateMVPMatrix();
+		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Down:
-		image_offset.y += (ctrlPressed ? 1 : 10);
+		camera.pos.y += (ctrlPressed ? 0.1 : 1);
+		camera.updateMVPMatrix();
+		updateStatusBar();
 		update();
 		break;
 	default:

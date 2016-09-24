@@ -28,6 +28,7 @@ namespace vp {
 
 	void computeVanishingPoints(const std::vector<VanishingLine>& lines, std::vector<glm::dvec2>& vps);
 	glm::dvec2 computeVanishingPoint(const std::vector<VanishingLine>& lines);
+	void extractCameraParameters(const std::vector<glm::dvec2>& vps, double& f, double& xrot, double& yrot, double& zrot);
 	void extractCameraMatrix(const std::vector<glm::dvec2>& vps, glm::dmat3& K, glm::dmat3& R);
 	void extractCameraMatrix(const std::vector<glm::dvec2>& vps, double f, const glm::dvec2& origin, double camera_ditance, glm::dvec3& T);
 	void extractCameraMatrixByThreeVPs(const std::vector<glm::dvec2>& vps, glm::dmat3& K, glm::dmat3& R);

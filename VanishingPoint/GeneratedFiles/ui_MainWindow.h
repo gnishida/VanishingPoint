@@ -35,6 +35,7 @@ public:
     QAction *actionComputeCameraMatrix;
     QAction *actionClearLines;
     QAction *actionCentering;
+    QAction *actionOption;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuFile;
@@ -66,6 +67,8 @@ public:
         actionClearLines->setObjectName(QStringLiteral("actionClearLines"));
         actionCentering = new QAction(MainWindowClass);
         actionCentering->setObjectName(QStringLiteral("actionCentering"));
+        actionOption = new QAction(MainWindowClass);
+        actionOption->setObjectName(QStringLiteral("actionOption"));
         centralWidget = new QWidget(MainWindowClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         MainWindowClass->setCentralWidget(centralWidget);
@@ -100,7 +103,7 @@ public:
         menuTool->addAction(actionComputeVanishingPoint);
         menuTool->addAction(actionComputeCameraMatrix);
         menuTool->addSeparator();
-        menuTool->addAction(actionCentering);
+        menuTool->addAction(actionOption);
 
         retranslateUi(MainWindowClass);
 
@@ -122,6 +125,7 @@ public:
         actionClearLines->setText(QApplication::translate("MainWindowClass", "Clear Lines", 0));
         actionClearLines->setShortcut(QApplication::translate("MainWindowClass", "Ctrl+N", 0));
         actionCentering->setText(QApplication::translate("MainWindowClass", "Centering", 0));
+        actionOption->setText(QApplication::translate("MainWindowClass", "Option", 0));
         menuFile->setTitle(QApplication::translate("MainWindowClass", "File", 0));
         menuEdit->setTitle(QApplication::translate("MainWindowClass", "Edit", 0));
         menuTool->setTitle(QApplication::translate("MainWindowClass", "Tool", 0));

@@ -63,6 +63,15 @@ namespace vp {
 		return result;
 	}
 
+	void extractCameraParameters(const std::vector<glm::dvec2>& vps, double& f, double& xrot, double& yrot, double& zrot) {
+		// compute K and R matrices
+		glm::dmat3 K, R;
+		vp::extractCameraMatrix(vps, K, R);
+		f = K[0][0];
+
+		vp::decomposeRotation(R, xrot, yrot, zrot);
+	}
+
 	void extractCameraMatrix(const std::vector<glm::dvec2>& vps, glm::dmat3& K, glm::dmat3& R) {
 		// assume the center of the image be the orthographic projection of the camera center
 		glm::dvec2 Oi(0, 0);
@@ -111,7 +120,7 @@ namespace vp {
 		K = glm::dmat3();
 		K[0][0] = f;
 		K[1][1] = f;
-		K[2][2] = 1;
+		K[2][2] = -1;
 
 		// recover the rotation matrix by Eq (15)
 		cv::Mat_<double> A(5, 2);
@@ -149,9 +158,11 @@ namespace vp {
 		KR[1][2] = lmdb[2];
 
 		R = glm::inverse(K) * KR;
+		/*
 		for (int i = 0; i < 3; ++i) {
 			R[i][2] = -R[i][2];
 		}
+		*/
 	}
 
 	/**

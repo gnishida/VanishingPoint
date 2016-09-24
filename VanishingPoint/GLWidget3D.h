@@ -32,8 +32,6 @@ public:
 	void undo();
 	void computeVanishingPoint();
 	void computeCameraMatrix();
-	void rotateAll();
-	void centerAll();
 	void updateGeometry();
 
 	void keyPressEvent(QKeyEvent* e);
@@ -63,11 +61,15 @@ public:
 
 	RenderManager renderManager;
 	std::vector<float> cuboid_size;
-	glm::dvec2 image_offset;
+	//glm::dvec2 image_offset;
 	std::vector<vp::VanishingLine> lines;
 	glm::dvec2 origin;
 
-
 	QImage image;
+
+	int contourLineWidth;
+	QColor horizontalLeftColor;
+	QColor horizontalRightColor;
+	QColor verticalColor;
 };
 

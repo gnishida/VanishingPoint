@@ -48,7 +48,7 @@
     <addaction name="actionComputeVanishingPoint"/>
     <addaction name="actionComputeCameraMatrix"/>
     <addaction name="separator"/>
-    <addaction name="actionCentering"/>
+    <addaction name="actionOption"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -115,6 +115,11 @@
   <action name="actionCentering">
    <property name="text">
     <string>Centering</string>
+   </property>
+  </action>
+  <action name="actionOption">
+   <property name="text">
+    <string>Option</string>
    </property>
   </action>
  </widget>
