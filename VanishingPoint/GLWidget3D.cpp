@@ -744,7 +744,7 @@ void GLWidget3D::computeCameraMatrix() {
 void GLWidget3D::updateGeometry() {
 	std::vector<Vertex> vertices;
 	glutils::drawBox(cuboid_size[0], cuboid_size[1], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), vertices);
-	//glutils::drawCylinderZ(cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, -cuboid_size[2] * 0.5)), vertices);
+	//glutils::drawCylinderZ(cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, -cuboid_size[2] * 0.5)), vertices, 36);
 	renderManager.removeObjects();
 	renderManager.addObject("box", "", vertices, true);
 }
