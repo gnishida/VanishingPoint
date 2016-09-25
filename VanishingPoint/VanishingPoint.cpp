@@ -93,12 +93,15 @@ namespace vp {
 
 		// recover the rotation matrix by Eq (6) in the paper "Camera calibration using two or three vanishing points" by Orghidan et al.
 		R = glm::dmat3();
-		for (int i = 0; i < 2; ++i) {
-			double denom = sqrt(vps[i].x * vps[i].x + vps[i].y * vps[i].y + f * f);
-			R[(i + 2) % 3][0] = vps[i].x / denom * (i == 0 ? -1 : 1);
-			R[(i + 2) % 3][1] = vps[i].y / denom * (i == 0 ? -1 : 1);
-			R[(i + 2) % 3][2] = -f / denom * (i == 0 ? -1 : 1);
-		}
+		glm::dvec3 Rx(-vps[0].x, -vps[0].y, f);
+		glm::dvec3 Ry(vps[2].x, vps[2].y, -f);
+		glm::dvec3 Rz(-vps[1].x, -vps[1].y, f);
+		Rx = glm::normalize(Rx);
+		Ry = glm::normalize(Ry);
+		Rz = glm::normalize(Rz);
+		R[0] = Rx;
+		R[1] = Ry;
+		R[2] = Rz;
 		R[1] = glm::cross(R[2], R[0]);
 	}
 
@@ -147,12 +150,12 @@ namespace vp {
 		lmdb[2] = sqrt(1 - x.at<double>(0, 0) - x.at<double>(1, 0));
 
 		glm::dmat3 KR;
-		KR[2][0] = -vps[0].x * lmdb[0];
-		KR[2][1] = -vps[0].y * lmdb[0];
-		KR[2][2] = -lmdb[0];
-		KR[0][0] = vps[1].x * lmdb[1];
-		KR[0][1] = vps[1].y * lmdb[1];
-		KR[0][2] = lmdb[1];
+		KR[0][0] = -vps[0].x * lmdb[0];
+		KR[0][1] = -vps[0].y * lmdb[0];
+		KR[0][2] = -lmdb[0];
+		KR[2][0] = -vps[1].x * lmdb[1];
+		KR[2][1] = -vps[1].y * lmdb[1];
+		KR[2][2] = -lmdb[1];
 		KR[1][0] = vps[2].x * lmdb[1];
 		KR[1][1] = vps[2].y * lmdb[1];
 		KR[1][2] = lmdb[2];
@@ -190,12 +193,15 @@ namespace vp {
 
 		// recover the rotation matrix by Eq (6) in the paper "Camera calibration using two or three vanishing points" by Orghidan et al.
 		R = glm::dmat3();
-		for (int i = 0; i < 2; ++i) {
-			double denom = sqrt((vps[i].x - o.x) * (vps[i].x - o.x) + (vps[i].y - o.y) * (vps[i].y - o.y) + f * f);
-			R[(i + 2) % 3][0] = (vps[i].x - o.x) / denom * (i == 0 ? -1 : 1);
-			R[(i + 2) % 3][1] = (vps[i].y - o.y) / denom * (i == 0 ? -1 : 1);
-			R[(i + 2) % 3][2] = -f / denom * (i == 0 ? -1 : 1);
-		}
+		glm::dvec3 Rx(-(vps[0].x - o.x), -(vps[0].y - o.y), f);
+		glm::dvec3 Ry(vps[2].x - o.x, vps[2].y - o.y, -f);
+		glm::dvec3 Rz(-(vps[1].x - o.x), -(vps[1].y - o.y), f);
+		Rx = glm::normalize(Rx);
+		Ry = glm::normalize(Ry);
+		Rz = glm::normalize(Rz);
+		R[0] = Rx;
+		R[1] = Ry;
+		R[2] = Rz;
 		R[1] = glm::cross(R[2], R[0]);
 	}
 
