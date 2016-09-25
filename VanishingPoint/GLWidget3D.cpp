@@ -40,7 +40,7 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 }
 
 void GLWidget3D::updateStatusBar() {
-	QString msg = QString("xrot=%1, yrot=%2, zrot=%3, pos=(%4, %5, %6), fov=%7, size=(%8, %9, %10)").arg(camera.xrot).arg(camera.yrot).arg(camera.zrot).arg(camera.pos.x).arg(camera.pos.y).arg(camera.pos.z).arg(camera.fovy).arg(cuboid_size[0]).arg(cuboid_size[1]).arg(cuboid_size[2]);
+	QString msg = QString("rot=(%1, %2, %3), pos=(%4, %5, %6), fov=%7, O=(%8, %9), size=(%10, %11, %12)").arg(camera.xrot).arg(camera.yrot).arg(camera.zrot).arg(camera.pos.x).arg(camera.pos.y).arg(camera.pos.z).arg(camera.fovy).arg(camera.center.x).arg(camera.center.y).arg(cuboid_size[0]).arg(cuboid_size[1]).arg(cuboid_size[2]);
 	mainWin->statusBar()->showMessage(msg);
 }
 
@@ -703,23 +703,22 @@ void GLWidget3D::computeCameraMatrix() {
 		vps[i].y = 1 - vps[i].y / height() * 2.0;
 	}
 	
+	/*
 	std::cout << "vp[0]" << glm::to_string(vps[0]) << std::endl;
 	std::cout << "vp[1]" << glm::to_string(vps[1]) << std::endl;
 	std::cout << "vp[2]" << glm::to_string(vps[2]) << std::endl;
+	*/
 
 	// compute K and R matrices
 	glm::dmat3 K, R;
-	vp::extractCameraMatrix(vps, K, R);
-	std::cout << "K: " << glm::to_string(K) << std::endl;
-	std::cout << "R: " << glm::to_string(R) << std::endl;
-	std::cout << "KR: " << glm::to_string(K * R) << std::endl;
-
-	glm::dmat3 K2, R2;
-	vp::extractCameraMatrixByThreeVPs(vps, K2, R2);
-	std::cout << "K2: " << glm::to_string(K2) << std::endl;
-	std::cout << "R2: " << glm::to_string(R2) << std::endl;
+	//vp::extractCameraMatrix(vps, K, R);
+	//vp::extractCameraMatrixByThreeVPs(vps, K, R);
+	vp::extractCameraMatrixByGenApproach(vps, K, R);
+	//std::cout << "K: " << glm::to_string(K) << std::endl;
+	//std::cout << "R: " << glm::to_string(R) << std::endl;
 
 	double f = K[0][0];
+	camera.center = glm::vec2(K[2][0], K[2][1]);
 	camera.fovy = vp::rad2deg(atan2(1.0, f) * 2);
 	double xrot, yrot, zrot;
 	vp::decomposeRotation(R, xrot, yrot, zrot);
@@ -730,9 +729,9 @@ void GLWidget3D::computeCameraMatrix() {
 	// compute T matrix
 	glm::dvec3 T;
 	double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
-	std::cout << "camera_distance: " << camera_distance << std::endl;
-	vp::extractCameraMatrix(vps, f, glm::vec2(origin.x / width() * 2 - 1, 1 - origin.y / height() * 2), camera_distance, T);
-	std::cout << "T: " << glm::to_string(T) << std::endl;
+	//std::cout << "camera_distance: " << camera_distance << std::endl;
+	vp::extractCameraMatrix(vps, f, glm::vec2(origin.x / width() * 2 - 1, 1 - origin.y / height() * 2) - camera.center, camera_distance, T);
+	//std::cout << "T: " << glm::to_string(T) << std::endl;
 	camera.pos = glm::vec3(-T.x, -T.y, -T.z);
 
 	// update camera

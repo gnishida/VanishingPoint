@@ -32,6 +32,7 @@ namespace vp {
 	void extractCameraMatrix(const std::vector<glm::dvec2>& vps, glm::dmat3& K, glm::dmat3& R);
 	void extractCameraMatrix(const std::vector<glm::dvec2>& vps, double f, const glm::dvec2& origin, double camera_ditance, glm::dvec3& T);
 	void extractCameraMatrixByThreeVPs(const std::vector<glm::dvec2>& vps, glm::dmat3& K, glm::dmat3& R);
+	void extractCameraMatrixByGenApproach(const std::vector<glm::dvec2>& vps, glm::dmat3& K, glm::dmat3& R);
 	glm::dvec2 projectPoint(const glm::dmat4& mvpMatrix, const glm::dvec3& p);
 	glm::dmat3 composeRotation(double xrot, double yrot, double zrot);
 	void decomposeRotation(const glm::dmat3& R, double& xrot, double& yrot, double& zrot);

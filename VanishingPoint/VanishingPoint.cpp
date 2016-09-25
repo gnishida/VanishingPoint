@@ -165,6 +165,40 @@ namespace vp {
 		*/
 	}
 
+	void extractCameraMatrixByGenApproach(const std::vector<glm::dvec2>& vps, glm::dmat3& K, glm::dmat3& R) {
+		cv::Mat_<double> A(2, 2);
+		A(0, 0) = vps[0].x - vps[2].x;
+		A(0, 1) = vps[0].y - vps[2].y;
+		A(1, 0) = vps[0].x - vps[1].x;
+		A(1, 1) = vps[0].y - vps[1].y;
+		cv::Mat_<double> B(2, 1);
+		B(0, 0) = glm::dot(vps[0], vps[1]) - glm::dot(vps[1], vps[2]);
+		B(1, 0) = glm::dot(vps[0], vps[2]) - glm::dot(vps[1], vps[2]);
+
+		cv::Mat O = A.inv(cv::DECOMP_SVD) * B;
+		glm::dvec2 o(O.at<double>(0, 0), O.at<double>(1, 0));
+
+		double f = sqrt(abs(glm::dot(vps[0] - o, vps[1] - o)));
+
+		// recover the intrinsic matrix by Eq (12)
+		K = glm::dmat3();
+		K[0][0] = f;
+		K[1][1] = f;
+		K[2][0] = o.x;
+		K[2][1] = o.y;
+		K[2][2] = -1;
+
+		// recover the rotation matrix by Eq (6) in the paper "Camera calibration using two or three vanishing points" by Orghidan et al.
+		R = glm::dmat3();
+		for (int i = 0; i < 2; ++i) {
+			double denom = sqrt((vps[i].x - o.x) * (vps[i].x - o.x) + (vps[i].y - o.y) * (vps[i].y - o.y) + f * f);
+			R[(i + 2) % 3][0] = (vps[i].x - o.x) / denom * (i == 0 ? -1 : 1);
+			R[(i + 2) % 3][1] = (vps[i].y - o.y) / denom * (i == 0 ? -1 : 1);
+			R[(i + 2) % 3][2] = -f / denom * (i == 0 ? -1 : 1);
+		}
+		R[1] = glm::cross(R[2], R[0]);
+	}
+
 	/**
 	 * Return the projected point of the specified 3d point onto the image plane.
 	 * Note that the coordinates of the projected point is normalized to [-1, 1].

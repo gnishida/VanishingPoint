@@ -61,7 +61,6 @@ public:
 
 	RenderManager renderManager;
 	std::vector<float> cuboid_size;
-	//glm::dvec2 image_offset;
 	std::vector<vp::VanishingLine> lines;
 	glm::dvec2 origin;
 

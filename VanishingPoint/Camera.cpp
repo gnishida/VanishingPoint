@@ -6,6 +6,7 @@
 #endif
 
 Camera::Camera() {
+	center = glm::vec2(0, 0);
 	xrot = 50.0f;
 	yrot = 45.0;
 	zrot = 0.0f;
@@ -82,7 +83,7 @@ void Camera::updatePMatrix(int width,int height) {
 	pMatrix = glm::mat4(
 		 f/aspect,	0,								0,									0,
 				0,	f,								0,						 			0,
-			    0,	0,		(zfar+znear)/(znear-zfar),		                           -1,
+			    -center.x,	-center.y,		(zfar+znear)/(znear-zfar),		           -1,
 			    0,	0, (2.0f*zfar*znear)/(znear-zfar),									0);
 
 	updateMVPMatrix();

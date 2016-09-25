@@ -17,6 +17,7 @@ public:
 	void updateMVPMatrix();
 
 public:
+	glm::vec2 center;
 	float fovy;
 	glm::vec3 pos;
 	float xrot;

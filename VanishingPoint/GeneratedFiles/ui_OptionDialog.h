@@ -130,6 +130,17 @@ public:
         pushButtonCancel = new QPushButton(OptionDialog);
         pushButtonCancel->setObjectName(QStringLiteral("pushButtonCancel"));
         pushButtonCancel->setGeometry(QRect(190, 160, 91, 31));
+        QWidget::setTabOrder(lineEditContourLineWidth, lineEditHorizontalLeftRed);
+        QWidget::setTabOrder(lineEditHorizontalLeftRed, lineEditHorizontalLeftGreen);
+        QWidget::setTabOrder(lineEditHorizontalLeftGreen, lineEditHorizontalLeftBlue);
+        QWidget::setTabOrder(lineEditHorizontalLeftBlue, lineEditHorizontalRightRed);
+        QWidget::setTabOrder(lineEditHorizontalRightRed, lineEditHorizontalRightGreen);
+        QWidget::setTabOrder(lineEditHorizontalRightGreen, lineEditHorizontalRightBlue);
+        QWidget::setTabOrder(lineEditHorizontalRightBlue, lineEditVerticalRed);
+        QWidget::setTabOrder(lineEditVerticalRed, lineEditVerticalGreen);
+        QWidget::setTabOrder(lineEditVerticalGreen, lineEditVerticalBlue);
+        QWidget::setTabOrder(lineEditVerticalBlue, pushButtonOK);
+        QWidget::setTabOrder(pushButtonOK, pushButtonCancel);
 
         retranslateUi(OptionDialog);
 
