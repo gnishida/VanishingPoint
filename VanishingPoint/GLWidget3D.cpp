@@ -719,6 +719,7 @@ void GLWidget3D::computeCameraMatrix() {
 
 	double f = K[0][0];
 	camera.center = glm::vec2(K[2][0], K[2][1]);
+	std::cout << "camera center: " << glm::to_string(camera.center) << std::endl;
 	camera.fovy = vp::rad2deg(atan2(1.0, f) * 2);
 	double xrot, yrot, zrot;
 	vp::decomposeRotation(R, xrot, yrot, zrot);
