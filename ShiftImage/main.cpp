@@ -30,7 +30,10 @@ int main() {
 				std::vector<std::string> strs;
 				boost::split(strs, line, boost::is_any_of("\t "));
 
-				if (strs.size() == 5) {
+				if (strs.size() == 2) {
+					center_point = glm::vec2(std::stof(strs[0]), std::stof(strs[1]));
+				}
+				else if (strs.size() == 5) {
 					glm::dvec2 start(std::stof(strs[0]), std::stof(strs[1]));
 					glm::dvec2 end(std::stof(strs[2]), std::stof(strs[3]));
 					if (start != end) {
