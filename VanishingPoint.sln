@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ManualCameraEstimation", "M
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShiftImage", "ShiftImage\ShiftImage.vcxproj", "{6F3603FD-464B-49EF-A9B9-5BE43362778A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VanishingPointPM", "VanishingPointPM\VanishingPointPM.vcxproj", "{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -55,6 +57,18 @@ Global
 		{6F3603FD-464B-49EF-A9B9-5BE43362778A}.Release|Win32.Build.0 = Release|Win32
 		{6F3603FD-464B-49EF-A9B9-5BE43362778A}.Release|x64.ActiveCfg = Release|x64
 		{6F3603FD-464B-49EF-A9B9-5BE43362778A}.Release|x64.Build.0 = Release|x64
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Debug|Win32.Build.0 = Debug|Win32
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Debug|x64.ActiveCfg = Debug|x64
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Debug|x64.Build.0 = Debug|x64
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Release|Win32.ActiveCfg = Release|Win32
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Release|Win32.Build.0 = Release|Win32
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Release|x64.ActiveCfg = Release|x64
+		{9BF968A4-2756-437F-B5BC-C10C86DEC7C7}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
