@@ -1,0 +1,1081 @@
+﻿#include "GLWidget3D.h"
+#include "MainWindow.h"
+#include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <map>
+#include "GLUtils.h"
+#include <QDir>
+#include <QTextStream>
+#include <iostream>
+#include <opencv2/core.hpp>
+#include <QFileDialog>
+#include "GrammarParser.h"
+#include "Rectangle.h"
+#include "BuildingMassEstimation.h"
+#include "Utils.h"
+#include <time.h>
+
+GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers)) {
+	this->mainWin = parent;
+	shiftPressed = false;
+	ctrlPressed = false;
+	altPressed = false;
+
+	pm_params.resize(5);
+	pm_params[0] = 0.5;
+	pm_params[1] = 0.5;
+	pm_params[2] = 0.5;
+	pm_params[3] = 0.5;
+	pm_params[4] = 0.5;
+	grammar_id = 0;
+
+	// Grammarを読み込む
+	{
+		grammars.resize(4);
+		cga::parseGrammar("cga/contour_01.xml", grammars[0]);
+		cga::parseGrammar("cga/contour_02.xml", grammars[1]);
+		cga::parseGrammar("cga/contour_03.xml", grammars[2]);
+		cga::parseGrammar("cga/contour_04.xml", grammars[3]);
+	}
+
+	pen_type = PEN_TYPE_VANISHING_LINE;
+	contourLineWidth = 3;
+	horizontalLeftColor = QColor(0, 0, 192);
+	horizontalRightColor = QColor(64, 64, 255);
+	verticalColor = QColor(140, 140, 255);
+	silhouetteWidth = 3;
+	silhouetteColor = QColor(255, 0, 0);
+
+	// This is necessary to prevent the screen overdrawn by OpenGL
+	setAutoFillBackground(false);
+
+	// 光源位置をセット
+	// ShadowMappingは平行光源を使っている。この位置から原点方向を平行光源の方向とする。
+	light_dir = glm::normalize(glm::vec3(-4, -5, -8));
+
+	// シャドウマップ用のmodel/view/projection行列を作成
+	glm::mat4 light_pMatrix = glm::ortho<float>(-50, 50, -50, 50, 0.1, 200);
+	glm::mat4 light_mvMatrix = glm::lookAt(-light_dir * 50.0f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	light_mvpMatrix = light_pMatrix * light_mvMatrix;
+}
+
+void GLWidget3D::updateStatusBar() {
+	QString format("rot=(%1, %2, %3), pos=(%4, %5, %6), fov=%7, O=(%8, %9), PM=(");
+	for (int i = 0; i < pm_params.size(); ++i) {
+		if (i > 0) format += ", ";
+		format += "%" + QString::number(10 + i);
+	}
+	format += ")";
+
+	//QString msg = QString("rot=(%1, %2, %3), pos=(%4, %5, %6), fov=%7, O=(%8, %9), size=(%10, %11, %12)").arg(camera.xrot).arg(camera.yrot).arg(camera.zrot).arg(camera.pos.x).arg(camera.pos.y).arg(camera.pos.z).arg(camera.fovy).arg(camera.center.x).arg(camera.center.y).arg(cuboid_size[0]).arg(cuboid_size[1]).arg(cuboid_size[2]);
+	QString msg = format.arg(camera.xrot).arg(camera.yrot).arg(camera.zrot).arg(camera.pos.x).arg(camera.pos.y).arg(camera.pos.z).arg(camera.fovy).arg(camera.center.x).arg(camera.center.y);
+	for (int i = 0; i < pm_params.size(); ++i) {
+		msg = msg.arg(pm_params[i]);
+	}
+	mainWin->statusBar()->showMessage(msg);
+}
+
+/**
+ * This event handler is called when the mouse press events occur.
+ */
+void GLWidget3D::mousePressEvent(QMouseEvent *e) {
+	if (e->buttons() & Qt::RightButton) { // rotate camera
+		camera.mousePress(e->x(), e->y());
+	}
+	else if (e->buttons() & Qt::MidButton) { // rotate around viewing direction
+		camera.mousePress(e->x(), e->y());
+	}
+	else if (e->buttons() & Qt::LeftButton) { // draw lines
+		if (ctrlPressed) {
+			origin = glm::vec2(e->x(), e->y());
+		}
+		else {
+			if (shiftPressed) {
+				if (pen_type == PEN_TYPE_VANISHING_LINE) {
+					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_RIGHT));
+				}
+				else if (pen_type == PEN_TYPE_SILHOUETTE) {
+					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_RIGHT));
+				}
+			}
+			else if (altPressed) {
+				if (pen_type == PEN_TYPE_VANISHING_LINE) {
+					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_VERTICAL));
+				}
+				else if (pen_type == PEN_TYPE_SILHOUETTE) {
+					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_VERTICAL));
+				}
+			}
+			else {
+				if (pen_type == PEN_TYPE_VANISHING_LINE) {
+					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
+				}
+				else if (pen_type == PEN_TYPE_SILHOUETTE) {
+					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
+				}
+			}
+		}
+		update();
+	}
+}
+
+/**
+ * This event handler is called when the mouse release events occur.
+ */
+void GLWidget3D::mouseReleaseEvent(QMouseEvent *e) {
+	// remove the line if it is just a point
+	if (pen_type == PEN_TYPE_VANISHING_LINE) {
+		if (lines.size() > 0 && lines.back().start == lines.back().end) {
+			lines.pop_back();
+		}
+	}
+	else if (pen_type == PEN_TYPE_SILHOUETTE) {
+		if (silhouette.size() > 0 && silhouette.back().start == silhouette.back().end) {
+			silhouette.pop_back();
+		}
+	}
+}
+
+/**
+ * This event handler is called when the mouse move events occur.
+ */
+void GLWidget3D::mouseMoveEvent(QMouseEvent *e) {
+	if (e->buttons() & Qt::RightButton) { // rotate camera
+		if (shiftPressed) { // Move
+			camera.move(e->x(), e->y());
+		}
+		else {
+			camera.rotate(e->x(), e->y(), (ctrlPressed ? 0.1 : 1));
+		}
+	}
+	else if (e->buttons() & Qt::MidButton) { // rotate around Z axis
+		camera.rotateAroundZ(e->x(), e->y(), (ctrlPressed ? 0.1 : 1));
+	}
+	else if (e->buttons() & Qt::LeftButton) { // draw lines
+		if (pen_type == PEN_TYPE_VANISHING_LINE) {
+			if (lines.size() > 0) {
+				lines.back().end = glm::vec2(e->x(), e->y());
+			}
+		}
+		else if (pen_type == PEN_TYPE_SILHOUETTE) {
+			if (silhouette.size() > 0) {
+				silhouette.back().end = glm::vec2(e->x(), e->y());
+			}
+		}
+	}
+	updateStatusBar();
+	update();
+}
+
+void GLWidget3D::wheelEvent(QWheelEvent* e) {
+	camera.changeFov(e->delta() * 0.05, (ctrlPressed ? 0.1 : 1), width(), height());
+	updateStatusBar();
+	update();
+}
+
+/**
+ * This function is called once before the first call to paintGL() or resizeGL().
+ */
+void GLWidget3D::initializeGL() {
+	// init glew
+	GLenum err = glewInit();
+	if (err != GLEW_OK) {
+		std::cout << "Error: " << glewGetErrorString(err) << std::endl;
+	}
+
+	if (glewIsSupported("GL_VERSION_4_2"))
+		printf("Ready for OpenGL 4.2\n");
+	else {
+		printf("OpenGL 4.2 not supported\n");
+		exit(1);
+	}
+	const GLubyte* text = glGetString(GL_VERSION);
+	printf("VERSION: %s\n", text);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+
+	glEnable(GL_TEXTURE_2D);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+	glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+	glDisable(GL_TEXTURE_2D);
+
+	glEnable(GL_TEXTURE_3D);
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glDisable(GL_TEXTURE_3D);
+
+	glEnable(GL_TEXTURE_2D_ARRAY);
+	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glDisable(GL_TEXTURE_2D_ARRAY);
+
+	////////////////////////////////
+	renderManager.init("", "", "", true, 8192);
+	renderManager.resize(this->width(), this->height());
+	renderManager.renderingMode = RenderManager::RENDERING_MODE_LINE;
+
+	glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "tex0"), 0);//tex0: 0
+
+	camera.changeFov(0, 1, width(), height());
+
+
+	updateGeometry();
+	updateStatusBar();
+}
+
+/**
+ * This function is called whenever the widget has been resized.
+ */
+void GLWidget3D::resizeGL(int width, int height) {
+	height = height ? height : 1;
+	glViewport(0, 0, width, height);
+	camera.updatePMatrix(width, height);
+
+	renderManager.resize(width, height);
+}
+
+/**
+ * This function is called whenever the widget needs to be painted.
+ */
+void GLWidget3D::paintEvent(QPaintEvent *event) {
+	// OpenGLで描画
+	makeCurrent();
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+
+	render();
+
+	// REMOVE
+	glActiveTexture(GL_TEXTURE0);
+
+	// OpenGLの設定を元に戻す
+	glShadeModel(GL_FLAT);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+
+	// draw background image
+	QPainter painter(this);
+	painter.setOpacity(0.5f);
+	painter.drawImage(0, 0, image);
+
+	// draw lines
+	painter.setOpacity(1.0f);
+	for (auto line : lines) {
+		if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_LEFT) {
+			painter.setPen(QPen(horizontalLeftColor, contourLineWidth));
+		}
+		else if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_RIGHT) {
+			painter.setPen(QPen(horizontalRightColor, contourLineWidth));
+		}
+		else {
+			painter.setPen(QPen(verticalColor, contourLineWidth));
+		}
+		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
+	}
+
+	// draw silhouette
+	painter.setPen(QPen(silhouetteColor, silhouetteWidth));
+	for (auto line : silhouette) {
+		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
+	}
+
+	// draw origin
+	painter.setPen(QPen(QColor(255, 255, 0), 1, Qt::SolidLine));
+	painter.setBrush(QBrush(QColor(255, 255, 0)));
+	painter.drawEllipse(origin.x - 3, origin.y - 3, 7, 7);
+
+	// draw the center of the building
+	glm::vec2 pp = vp::projectPoint(camera.mvpMatrix, glm::dvec3(0, 0, 0));
+	painter.setPen(QPen(QColor(255, 0, 0), 1, Qt::SolidLine));
+	painter.setBrush(QBrush(QColor(255, 0, 0)));
+	painter.drawEllipse((pp.x + 1) * 0.5 * width() - 3, (1 - pp.y) * 0.5 * height() - 3, 7, 7);
+
+	painter.end();
+
+	glEnable(GL_DEPTH_TEST);
+}
+
+/**
+ * Draw the scene.
+ */
+void GLWidget3D::drawScene() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(true);
+
+	renderManager.renderAll();
+}
+
+void GLWidget3D::render() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_MODELVIEW);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// PASS 1: Render to texture
+	glUseProgram(renderManager.programs["pass1"]);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, renderManager.fragDataFB);
+	glClearColor(0.95, 0.95, 0.95, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderManager.fragDataTex[0], 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderManager.fragDataTex[1], 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, renderManager.fragDataTex[2], 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, renderManager.fragDataTex[3], 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, renderManager.fragDepthTex, 0);
+
+	// Set the list of draw buffers.
+	GLenum DrawBuffers[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, DrawBuffers); // "3" is the size of DrawBuffers
+	// Always check that our framebuffer is ok
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		printf("+ERROR: GL_FRAMEBUFFER_COMPLETE false\n");
+		exit(0);
+	}
+
+	glUniformMatrix4fv(glGetUniformLocation(renderManager.programs["pass1"], "mvpMatrix"), 1, false, &camera.mvpMatrix[0][0]);
+	glUniform3f(glGetUniformLocation(renderManager.programs["pass1"], "lightDir"), light_dir.x, light_dir.y, light_dir.z);
+	glUniformMatrix4fv(glGetUniformLocation(renderManager.programs["pass1"], "light_mvpMatrix"), 1, false, &light_mvpMatrix[0][0]);
+
+	glUniform1i(glGetUniformLocation(renderManager.programs["pass1"], "shadowMap"), 6);
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, renderManager.shadow.textureDepth);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	drawScene();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// PASS 2: Create AO
+	if (renderManager.renderingMode == RenderManager::RENDERING_MODE_SSAO) {
+		glUseProgram(renderManager.programs["ssao"]);
+		glBindFramebuffer(GL_FRAMEBUFFER, renderManager.fragDataFB_AO);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderManager.fragAOTex, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, renderManager.fragDepthTex_AO, 0);
+		GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+		glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+		glClearColor(1, 1, 1, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Always check that our framebuffer is ok
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			printf("++ERROR: GL_FRAMEBUFFER_COMPLETE false\n");
+			exit(0);
+		}
+
+		glDisable(GL_DEPTH_TEST);
+		glDepthFunc(GL_ALWAYS);
+
+		glUniform2f(glGetUniformLocation(renderManager.programs["ssao"], "pixelSize"), 2.0f / this->width(), 2.0f / this->height());
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "tex0"), 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[0]);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "tex1"), 2);
+		glActiveTexture(GL_TEXTURE2);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[1]);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "tex2"), 3);
+		glActiveTexture(GL_TEXTURE3);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[2]);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "depthTex"), 8);
+		glActiveTexture(GL_TEXTURE8);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDepthTex);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "noiseTex"), 7);
+		glActiveTexture(GL_TEXTURE7);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragNoiseTex);
+
+		{
+			glUniformMatrix4fv(glGetUniformLocation(renderManager.programs["ssao"], "mvpMatrix"), 1, false, &camera.mvpMatrix[0][0]);
+			glUniformMatrix4fv(glGetUniformLocation(renderManager.programs["ssao"], "pMatrix"), 1, false, &camera.pMatrix[0][0]);
+		}
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "uKernelSize"), renderManager.uKernelSize);
+		glUniform3fv(glGetUniformLocation(renderManager.programs["ssao"], "uKernelOffsets"), renderManager.uKernelOffsets.size(), (const GLfloat*)renderManager.uKernelOffsets.data());
+
+		glUniform1f(glGetUniformLocation(renderManager.programs["ssao"], "uPower"), renderManager.uPower);
+		glUniform1f(glGetUniformLocation(renderManager.programs["ssao"], "uRadius"), renderManager.uRadius);
+
+		glBindVertexArray(renderManager.secondPassVAO);
+
+		glDrawArrays(GL_QUADS, 0, 4);
+		glBindVertexArray(0);
+		glDepthFunc(GL_LEQUAL);
+	}
+	else if (renderManager.renderingMode == RenderManager::RENDERING_MODE_LINE || renderManager.renderingMode == RenderManager::RENDERING_MODE_HATCHING) {
+		glUseProgram(renderManager.programs["line"]);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(1, 1, 1, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glDisable(GL_DEPTH_TEST);
+		glDepthFunc(GL_ALWAYS);
+
+		glUniform2f(glGetUniformLocation(renderManager.programs["line"], "pixelSize"), 1.0f / this->width(), 1.0f / this->height());
+		glUniformMatrix4fv(glGetUniformLocation(renderManager.programs["line"], "pMatrix"), 1, false, &camera.pMatrix[0][0]);
+		if (renderManager.renderingMode == RenderManager::RENDERING_MODE_LINE) {
+			glUniform1i(glGetUniformLocation(renderManager.programs["line"], "useHatching"), 0);
+		}
+		else {
+			glUniform1i(glGetUniformLocation(renderManager.programs["line"], "useHatching"), 1);
+		}
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["line"], "tex0"), 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[0]);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["line"], "tex1"), 2);
+		glActiveTexture(GL_TEXTURE2);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[1]);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["line"], "tex2"), 3);
+		glActiveTexture(GL_TEXTURE3);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[2]);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["line"], "tex3"), 4);
+		glActiveTexture(GL_TEXTURE4);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[3]);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["line"], "depthTex"), 8);
+		glActiveTexture(GL_TEXTURE8);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDepthTex);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["line"], "hatchingTexture"), 5);
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_3D, renderManager.hatchingTextures);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+		glBindVertexArray(renderManager.secondPassVAO);
+
+		glDrawArrays(GL_QUADS, 0, 4);
+		glBindVertexArray(0);
+		glDepthFunc(GL_LEQUAL);
+	}
+	else if (renderManager.renderingMode == RenderManager::RENDERING_MODE_CONTOUR) {
+		glUseProgram(renderManager.programs["contour"]);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(1, 1, 1, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glDisable(GL_DEPTH_TEST);
+		glDepthFunc(GL_ALWAYS);
+
+		glUniform2f(glGetUniformLocation(renderManager.programs["contour"], "pixelSize"), 1.0f / this->width(), 1.0f / this->height());
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["contour"], "depthTex"), 8);
+		glActiveTexture(GL_TEXTURE8);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDepthTex);
+
+		glBindVertexArray(renderManager.secondPassVAO);
+
+		glDrawArrays(GL_QUADS, 0, 4);
+		glBindVertexArray(0);
+		glDepthFunc(GL_LEQUAL);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Blur
+
+	if (renderManager.renderingMode == RenderManager::RENDERING_MODE_BASIC || renderManager.renderingMode == RenderManager::RENDERING_MODE_SSAO) {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		qglClearColor(QColor(0xFF, 0xFF, 0xFF));
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glDisable(GL_DEPTH_TEST);
+		glDepthFunc(GL_ALWAYS);
+
+		glUseProgram(renderManager.programs["blur"]);
+		glUniform2f(glGetUniformLocation(renderManager.programs["blur"], "pixelSize"), 2.0f / this->width(), 2.0f / this->height());
+		//printf("pixelSize loc %d\n", glGetUniformLocation(vboRenderManager.programs["blur"], "pixelSize"));
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["blur"], "tex0"), 1);//COLOR
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[0]);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["blur"], "tex1"), 2);//NORMAL
+		glActiveTexture(GL_TEXTURE2);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[1]);
+
+		/*glUniform1i(glGetUniformLocation(renderManager.programs["blur"], "tex2"), 3);
+		glActiveTexture(GL_TEXTURE3);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDataTex[2]);*/
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["blur"], "depthTex"), 8);
+		glActiveTexture(GL_TEXTURE8);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragDepthTex);
+
+		glUniform1i(glGetUniformLocation(renderManager.programs["blur"], "tex3"), 4);//AO
+		glActiveTexture(GL_TEXTURE4);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, renderManager.fragAOTex);
+
+		if (renderManager.renderingMode == RenderManager::RENDERING_MODE_SSAO) {
+			glUniform1i(glGetUniformLocation(renderManager.programs["blur"], "ssao_used"), 1); // ssao used
+		}
+		else {
+			glUniform1i(glGetUniformLocation(renderManager.programs["blur"], "ssao_used"), 0); // no ssao
+		}
+
+		glBindVertexArray(renderManager.secondPassVAO);
+
+		glDrawArrays(GL_QUADS, 0, 4);
+		glBindVertexArray(0);
+		glDepthFunc(GL_LEQUAL);
+
+	}
+
+	// REMOVE
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void GLWidget3D::loadImage(const QString& filename) {
+	image.load(filename);
+
+	// scale the image such that it fits to the window
+	float scale = std::min((float)width() / image.width(), (float)height() / image.height());
+	QImage newImage = image.scaled(image.width() * scale, image.height() * scale);
+
+	image = QImage(width(), height(), QImage::Format_RGB32);
+	QPainter painter(&image);
+	painter.fillRect(0, 0, image.width(), image.height(), QBrush(QColor(255, 255, 255)));
+	painter.drawImage((width() - newImage.width()) / 2, (height() - newImage.height()) / 2, newImage);
+
+	update();
+}
+
+void GLWidget3D::clearLines() {
+	if (pen_type == PEN_TYPE_VANISHING_LINE) {
+		lines.clear();
+	}
+	else if (pen_type == PEN_TYPE_SILHOUETTE) {
+		silhouette.clear();
+	}
+	update();
+}
+
+void GLWidget3D::loadLines(const QString& filename) {
+	lines.clear();
+
+	QFile file(filename);
+	if (file.open(QIODevice::ReadOnly)) {
+		QTextStream in(&file);
+
+		while (true) {
+			QString line = in.readLine();
+			if (line.isNull()) break;
+			QStringList list = line.split(QRegExp("(\t| )"));
+			
+			if (list.size() == 2) {
+				origin = glm::dvec2(list[0].toFloat(), list[1].toFloat());
+			}
+			else {
+				glm::dvec2 start(list[0].toFloat(), list[1].toFloat());
+				glm::dvec2 end(list[2].toFloat(), list[3].toFloat());
+				if (start != end) {
+					lines.push_back(vp::VanishingLine(start.x, start.y, end.x, end.y, list[4].toInt()));
+				}
+			}
+		}
+
+		file.close();
+	}
+	update();
+}
+
+void GLWidget3D::saveLines(const QString& filename) {
+	QFile file(filename);
+	if (file.open(QIODevice::WriteOnly)) {
+		QTextStream out(&file);
+
+		out << origin.x << " " << origin.y << "\n";
+		for (auto line : lines) {
+			out << line.start.x << " " << line.start.y << " " << line.end.x << " " << line.end.y << " " << line.type << "\n";
+		}
+	}
+	file.close();
+}
+
+void GLWidget3D::loadSilhouette(const QString& filename) {
+	silhouette.clear();
+
+	QFile file(filename);
+	if (file.open(QIODevice::ReadOnly)) {
+		QTextStream in(&file);
+
+		while (true) {
+			QString line = in.readLine();
+			if (line.isNull()) break;
+			QStringList list = line.split(QRegExp("(\t| )"));
+
+			glm::dvec2 start(list[0].toFloat(), list[1].toFloat());
+			glm::dvec2 end(list[2].toFloat(), list[3].toFloat());
+			if (start != end) {
+				silhouette.push_back(vp::VanishingLine(start.x, start.y, end.x, end.y, list[4].toInt()));
+			}
+		}
+
+		file.close();
+	}
+	update();
+}
+
+void GLWidget3D::saveSilhouette(const QString& filename) {
+	QFile file(filename);
+	if (file.open(QIODevice::WriteOnly)) {
+		QTextStream out(&file);
+
+		for (auto line : silhouette) {
+			out << line.start.x << " " << line.start.y << " " << line.end.x << " " << line.end.y << " " << line.type << "\n";
+		}
+	}
+	file.close();
+}
+
+void GLWidget3D::undo() {
+	if (pen_type == PEN_TYPE_VANISHING_LINE) {
+		if (lines.size() > 0) {
+			lines.pop_back();
+			update();
+		}
+	}
+	else if (pen_type == PEN_TYPE_SILHOUETTE) {
+		if (silhouette.size() > 0) {
+			silhouette.pop_back();
+			update();
+		}
+	}
+}
+
+void GLWidget3D::computeVanishingPoint() {
+	std::vector<glm::dvec2> vps;
+	vp::computeVanishingPoints(lines, vps);
+
+	for (int i = 0; i < vps.size(); ++i) {
+		std::cout << "vp" << (i + 1) << ": " << vps[i].x << ", " << vps[i].y << std::endl;
+	}
+
+	// determine the bounding box of the resulting image
+	const int margin = 50;
+	int x1 = 0;
+	int y1 = 0;
+	int x2 = width() - 1;
+	int y2 = height() - 1;
+	for (int i = 0; i < vps.size(); ++i) {
+		if (vps[i].x - margin < x1) x1 = vps[i].x - margin;
+		if (vps[i].x + margin > x2) x2 = vps[i].x + margin;
+		if (vps[i].y - margin < y1) y1 = vps[i].y - margin;
+		if (vps[i].y + margin> y2) y2 = vps[i].y + margin;
+	}
+	std::cout << "Rect: " << x1 << ", " << y1 << ", " << x2 << ", " << y2 << std::endl;
+
+	// create a resulting image
+	QImage result(x2 - x1 + 1, y2 - y1 + 1, QImage::Format_RGB32);
+	QPainter painter(&result);
+	painter.fillRect(0, 0, result.width(), result.height(), QBrush(QColor(255, 255, 255)));
+	painter.drawImage(-x1, -y1, image);
+	painter.setPen(QPen(QColor(0, 0, 255), 1, Qt::SolidLine, Qt::RoundCap));
+	for (auto line : lines) {
+		double dist0 = glm::length(line.start - line.end);
+		double dist1 = glm::length(line.start - vps[line.type]);
+		double dist2 = glm::length(line.end - vps[line.type]);
+		if (dist1 < dist2) {
+			line.start = line.start + (line.start - line.end) * (dist1 + margin) / dist0;
+		}
+		else {
+			line.end = line.end + (line.end - line.start) * (dist2 + margin) / dist0;
+		}
+		painter.drawLine(line.start.x - x1, line.start.y - y1, line.end.x - x1, line.end.y - y1);
+	}
+	painter.setPen(QPen(QColor(255, 0, 0), 10, Qt::SolidLine, Qt::RoundCap));
+	for (int i = 0; i < vps.size(); ++i) {
+		painter.drawEllipse(vps[i].x - x1, vps[i].y - y1, 10, 10);
+	}
+	painter.end();
+	result.save("vanishing_points.png");
+}
+
+void GLWidget3D::computeCameraMatrix() {
+	std::vector<glm::dvec2> vps;
+	vp::computeVanishingPoints(lines, vps);
+
+	// convert the coordinates of vp to [-1, 1]
+	for (int i = 0; i < vps.size(); ++i) {
+		vps[i].x = vps[i].x / width() * 2.0 - 1;
+		vps[i].y = 1 - vps[i].y / height() * 2.0;
+	}
+
+	double f, xrot, yrot, zrot;
+	vp::extractCameraParameters(vps, f, xrot, yrot, zrot, camera.center);
+	camera.fovy = vp::rad2deg(atan2(1.0, f) * 2);
+	camera.xrot = vp::rad2deg(xrot);
+	camera.yrot = vp::rad2deg(yrot);
+	camera.zrot = vp::rad2deg(zrot);
+
+	// compute T matrix
+	glm::dvec3 T;
+	double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
+	vp::extractCameraMatrix(vps, f, glm::vec2(origin.x / width() * 2 - 1, 1 - origin.y / height() * 2) - camera.center, camera_distance, T);
+	camera.pos = glm::vec3(-T.x, -T.y, -T.z);
+
+	// update camera
+	camera.updatePMatrix(width(), height());
+
+	updateStatusBar();
+	update();
+}
+
+void GLWidget3D::reconstruct3D() {
+	time_t start = clock();
+
+	/////////////////////////////////////////////////////////////////////////
+	// compute camera parameters
+	std::vector<glm::dvec2> vps;
+	vp::computeVanishingPoints(lines, vps);
+
+	// convert the coordinates of vp to [-1, 1]
+	for (int i = 0; i < vps.size(); ++i) {
+		vps[i].x = vps[i].x / width() * 2.0 - 1;
+		vps[i].y = 1 - vps[i].y / height() * 2.0;
+	}
+
+	double f, xrot, yrot, zrot;
+	vp::extractCameraParameters(vps, f, xrot, yrot, zrot, camera.center);
+	camera.fovy = vp::rad2deg(atan2(1.0, f) * 2);
+	camera.xrot = vp::rad2deg(xrot);
+	camera.yrot = vp::rad2deg(yrot);
+	camera.zrot = vp::rad2deg(zrot);
+
+	// compute T matrix
+	/*
+	glm::dvec3 T;
+	double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
+	vp::extractCameraMatrix(vps, f, glm::vec2(origin.x / width() * 2 - 1, 1 - origin.y / height() * 2) - camera.center, camera_distance, T);
+	camera.pos = glm::vec3(-T.x, -T.y, -T.z);
+	*/
+
+	// update camera
+	camera.updatePMatrix(width(), height());
+
+	// create image of silhouette
+	cv::Mat silhouette_image(height(), width(), CV_8UC1, cv::Scalar(255));
+	for (auto line : silhouette) {
+		cv::line(silhouette_image, cv::Point(line.start.x, line.start.y), cv::Point(line.end.x, line.end.y), cv::Scalar(0), 1);
+	}
+
+	// create distance map of silhouette
+	cv::Mat silhouette_dist_map;
+	cv::threshold(silhouette_image, silhouette_image, 254, 255, CV_THRESH_BINARY);
+	cv::distanceTransform(silhouette_image, silhouette_dist_map, CV_DIST_L2, 3);
+	silhouette_dist_map.convertTo(silhouette_dist_map, CV_64F);
+
+	/////////////////////////////////////////////////////////////////////////
+	// do random walk to find good initial PM parameter values
+	cga::CGA cga;
+
+	renderManager.renderingMode = RenderManager::RENDERING_MODE_CONTOUR;
+
+	std::vector<float> best_params(grammars[grammar_id].attrs.size() + 2);
+	double diff_min = std::numeric_limits<double>::max();
+	printf("find good values by random sampling: ");
+	for (int iter = 0; iter < 300; ++iter) {
+		printf("\rfind good initial values by random sampling: %d", iter + 1);
+
+		// randomly pick the initial values
+		std::vector<float> cur_params(best_params.size());
+		for (int k = 0; k < cur_params.size(); ++k) {
+			//cur_params[k] = utils::genRand(0.0, 1.0);
+			cur_params[k] = utils::genRand(0.3, 0.7);
+		}
+
+		// compute the camera pos
+		glm::dvec3 T;
+		double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
+		vp::extractCameraMatrix(vps, f, glm::vec2(cur_params[0] * 2 - 1, cur_params[1] * 2 - 1) - camera.center, camera_distance, T);
+		camera.pos = glm::vec3(-T.x, -T.y, -T.z);
+
+		// update camera
+		camera.updatePMatrix(width(), height());
+		
+		cv::Mat rendered_image;
+		renderImage(cga, grammars[grammar_id], std::vector<float>(cur_params.begin() + 2, cur_params.end()), rendered_image);
+
+		// compute the difference
+		double diff = distanceMap(rendered_image, silhouette_dist_map);
+
+		// coordinate descent
+		float delta = 0.1;
+		for (int iter2 = 0; iter2 < 10; ++iter2) {
+			for (int k = 0; k < cur_params.size(); ++k) {
+				// option 1
+				std::vector<float> next_params1 = cur_params;
+				next_params1[k] -= delta;
+				if (k < 2) {
+					glm::dvec3 T;
+					double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
+					vp::extractCameraMatrix(vps, f, glm::vec2(next_params1[0] * 2 - 1, next_params1[1] * 2 - 1) - camera.center, camera_distance, T);
+					camera.pos = glm::vec3(-T.x, -T.y, -T.z);
+
+					// update camera
+					camera.updatePMatrix(width(), height());
+				}
+				cv::Mat rendered_image1;
+				renderImage(cga, grammars[grammar_id], std::vector<float>(next_params1.begin() + 2, next_params1.end()), rendered_image1);
+				double diff1 = distanceMap(rendered_image1, silhouette_dist_map);
+
+				// option 2
+				std::vector<float> next_params2 = cur_params;
+				next_params2[k] += delta;
+				if (k < 2) {
+					glm::dvec3 T;
+					double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
+					vp::extractCameraMatrix(vps, f, glm::vec2(next_params2[0] * 2 - 1, next_params2[1] * 2 - 1) - camera.center, camera_distance, T);
+					camera.pos = glm::vec3(-T.x, -T.y, -T.z);
+
+					// update camera
+					camera.updatePMatrix(width(), height());
+				}
+				cv::Mat rendered_image2;
+				renderImage(cga, grammars[grammar_id], std::vector<float>(next_params2.begin() + 2, next_params2.end()), rendered_image2);
+				double diff2 = distanceMap(rendered_image2, silhouette_dist_map);
+
+				if (diff1 < diff2 && diff1 < diff) {
+					diff = diff1;
+					cur_params = next_params1;
+				}
+				else if (diff2 < diff1 && diff2 < diff) {
+					diff = diff2;
+					cur_params = next_params2;
+				}
+			}
+
+			delta *= 0.8;
+		}
+
+		if (diff < diff_min) {
+			diff_min = diff;
+			best_params = cur_params;
+		}
+	}
+	printf("\n");
+
+
+	renderManager.renderingMode = RenderManager::RENDERING_MODE_LINE;
+
+	// set the camera pos
+	glm::dvec3 T;
+	double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
+	vp::extractCameraMatrix(vps, f, glm::vec2(best_params[0] * 2 - 1, best_params[1] * 2 - 1) - camera.center, camera_distance, T);
+	camera.pos = glm::vec3(-T.x, -T.y, -T.z);
+	camera.updatePMatrix(width(), height());
+
+	// set PM parameter values
+	pm_params.clear();
+	for (int k = 2; k < best_params.size(); ++k) {
+		pm_params.push_back(best_params[k]);
+	}
+
+	updateGeometry();
+
+	updateStatusBar();
+	update();
+
+	time_t end = clock();
+	std::cout << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;
+}
+
+void GLWidget3D::renderImage(cga::CGA& cga, cga::Grammar& grammar, const std::vector<float>& pm_params, cv::Mat& rendered_image) {
+	cga.setParamValues(grammar, pm_params);
+
+	// set axiom
+	boost::shared_ptr<cga::Shape> start = boost::shared_ptr<cga::Shape>(new cga::Rectangle("Start", "", glm::translate(glm::rotate(glm::mat4(), -3.141592f * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), glm::mat4(), 0, 0, glm::vec3(1, 1, 1)));
+	cga.stack.push_back(start);
+
+	// generate 3d model
+	cga.derive(grammar, true);
+	std::vector<boost::shared_ptr<glutils::Face> > faces;
+	renderManager.removeObjects();
+	cga.generateGeometry(faces, true);
+	renderManager.addFaces(faces, true);
+
+	render();
+	QImage img = grabFrameBuffer();
+	rendered_image = cv::Mat(img.height(), img.width(), CV_8UC4, img.bits(), img.bytesPerLine()).clone();
+	cv::cvtColor(rendered_image, rendered_image, cv::COLOR_BGRA2BGR);
+}
+
+double GLWidget3D::distanceMap(cv::Mat rendered_image, const cv::Mat& reference_dist_map) {
+	cv::cvtColor(rendered_image, rendered_image, CV_BGR2GRAY);
+
+	// compute the distance map
+	cv::Mat rendered_dist_map;
+	cv::threshold(rendered_image, rendered_image, 254, 255, CV_THRESH_BINARY);
+	cv::distanceTransform(rendered_image, rendered_dist_map, CV_DIST_L2, 3);
+	rendered_dist_map.convertTo(rendered_dist_map, CV_64F);
+
+	// compute the squared difference
+	cv::Mat diff_mat;
+	cv::reduce((reference_dist_map - rendered_dist_map).mul(reference_dist_map - rendered_dist_map), diff_mat, 0, CV_REDUCE_SUM);
+	cv::reduce(diff_mat, diff_mat, 1, CV_REDUCE_SUM);
+
+	return diff_mat.at<double>(0, 0);
+}
+
+void GLWidget3D::setupGeometry(cga::Grammar& grammar, const std::vector<float>& pm_params, std::vector<boost::shared_ptr<glutils::Face>>& faces) {
+	// setup CGA
+	cga::CGA cga;
+	cga.modelMat = glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0));
+
+	cga.setParamValues(grammar, pm_params);
+
+	// set axiom
+	boost::shared_ptr<cga::Shape> start = boost::shared_ptr<cga::Shape>(new cga::Rectangle("Start", "", glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), glm::mat4(), 0, 0, glm::vec3(1, 1, 1)));
+	cga.stack.push_back(start);
+
+	// generate 3d model
+	cga.derive(grammar, true);
+	faces.clear();
+	cga.generateGeometry(faces, true);
+}
+
+void GLWidget3D::updateGeometry() {
+	//std::vector<Vertex> vertices;
+	//glutils::drawBox(cuboid_size[0], cuboid_size[1], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), vertices);
+	//glutils::drawCylinderZ(cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, -cuboid_size[2] * 0.5)), vertices, 36);
+	//renderManager.addObject("box", "", vertices, true);
+
+	std::vector<boost::shared_ptr<glutils::Face>> faces;
+	setupGeometry(grammars[grammar_id], pm_params, faces);
+	renderManager.removeObjects();
+	renderManager.addFaces(faces, true);
+}
+
+void GLWidget3D::keyPressEvent(QKeyEvent *e) {
+	ctrlPressed = false;
+
+	if (e->modifiers() == Qt::ControlModifier) {
+		ctrlPressed = true;
+	}
+
+	switch (e->key()) {
+	case Qt::Key_Shift:
+		shiftPressed = true;
+		break;
+	case Qt::Key_Alt:
+		altPressed = true;
+		break;
+	case Qt::Key_1:
+		if (pm_params.size() > 0) {
+			pm_params[0] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
+			updateGeometry();
+			updateStatusBar();
+			update();
+		}
+		break;
+	case Qt::Key_2:
+		if (pm_params.size() > 1) {
+			pm_params[1] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
+			updateGeometry();
+			updateStatusBar();
+			update();
+		}
+		break;
+	case Qt::Key_3:
+		if (pm_params.size() > 2) {
+			pm_params[2] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
+			updateGeometry();
+			updateStatusBar();
+			update();
+		}
+		break;
+	case Qt::Key_4:
+		if (pm_params.size() > 3) {
+			pm_params[3] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
+			updateGeometry();
+			updateStatusBar();
+		}
+		update();
+		break;
+	case Qt::Key_Left:
+		camera.pos.x += (ctrlPressed ? 0.1 : 1);
+		camera.updateMVPMatrix();
+		updateStatusBar();
+		update();
+		break;
+	case Qt::Key_Right:
+		camera.pos.x -= (ctrlPressed ? 0.1 : 1);
+		camera.updateMVPMatrix();
+		updateStatusBar();
+		update();
+		break;
+	case Qt::Key_Up:
+		camera.pos.y -= (ctrlPressed ? 0.1 : 1);
+		camera.updateMVPMatrix();
+		updateStatusBar();
+		update();
+		break;
+	case Qt::Key_Down:
+		camera.pos.y += (ctrlPressed ? 0.1 : 1);
+		camera.updateMVPMatrix();
+		updateStatusBar();
+		update();
+		break;
+	default:
+		break;
+	}
+}
+
+void GLWidget3D::keyReleaseEvent(QKeyEvent* e) {
+	switch (e->key()) {
+	case Qt::Key_Shift:
+		shiftPressed = false;
+		break;
+	case Qt::Key_Control:
+		ctrlPressed = false;
+		break;
+	case Qt::Key_Alt:
+		altPressed = false;
+		break;
+	case Qt::Key_1:
+	case Qt::Key_2:
+	case Qt::Key_3:
+		break;
+	default:
+		break;
+	}
+}
+
