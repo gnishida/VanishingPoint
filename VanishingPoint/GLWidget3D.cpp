@@ -765,43 +765,43 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		altPressed = true;
 		break;
 	case Qt::Key_1:
-		cuboid_size[0] += 0.5 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		cuboid_size[0] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		updateGeometry();
 		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_2:
-		cuboid_size[1] += 0.5 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		cuboid_size[1] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		updateGeometry();
 		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_3:
-		cuboid_size[2] += 0.5 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		cuboid_size[2] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		updateGeometry();
 		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Left:
-		camera.pos.x += (ctrlPressed ? 0.1 : 1);
+		camera.pos.x += 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
 		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Right:
-		camera.pos.x -= (ctrlPressed ? 0.1 : 1);
+		camera.pos.x -= 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
 		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Up:
-		camera.pos.y -= (ctrlPressed ? 0.1 : 1);
+		camera.pos.y -= 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
 		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Down:
-		camera.pos.y += (ctrlPressed ? 0.1 : 1);
+		camera.pos.y += 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
 		updateStatusBar();
 		update();

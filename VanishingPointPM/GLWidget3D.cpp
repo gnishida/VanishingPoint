@@ -22,12 +22,10 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 	ctrlPressed = false;
 	altPressed = false;
 
-	pm_params.resize(5);
+	pm_params.resize(3);
 	pm_params[0] = 0.5;
 	pm_params[1] = 0.5;
 	pm_params[2] = 0.5;
-	pm_params[3] = 0.5;
-	pm_params[4] = 0.5;
 	grammar_id = 0;
 
 	// Grammarを読み込む
@@ -845,7 +843,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		break;
 	case Qt::Key_1:
 		if (pm_params.size() > 0) {
-			pm_params[0] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
+			pm_params[0] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 			updateGeometry(grammars[grammar_id], pm_params);
 			updateStatusBar();
 			update();
@@ -853,7 +851,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		break;
 	case Qt::Key_2:
 		if (pm_params.size() > 1) {
-			pm_params[1] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
+			pm_params[1] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 			updateGeometry(grammars[grammar_id], pm_params);
 			updateStatusBar();
 			update();
@@ -861,7 +859,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		break;
 	case Qt::Key_3:
 		if (pm_params.size() > 2) {
-			pm_params[2] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
+			pm_params[2] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 			updateGeometry(grammars[grammar_id], pm_params);
 			updateStatusBar();
 			update();
@@ -869,32 +867,40 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		break;
 	case Qt::Key_4:
 		if (pm_params.size() > 3) {
-			pm_params[3] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
+			pm_params[3] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+			updateGeometry(grammars[grammar_id], pm_params);
+			updateStatusBar();
+		}
+		update();
+		break;
+	case Qt::Key_5:
+		if (pm_params.size() > 4) {
+			pm_params[4] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 			updateGeometry(grammars[grammar_id], pm_params);
 			updateStatusBar();
 		}
 		update();
 		break;
 	case Qt::Key_Left:
-		camera.pos.x += (ctrlPressed ? 0.1 : 1);
+		camera.pos.x += 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
 		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Right:
-		camera.pos.x -= (ctrlPressed ? 0.1 : 1);
+		camera.pos.x -= 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
 		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Up:
-		camera.pos.y -= (ctrlPressed ? 0.1 : 1);
+		camera.pos.y -= 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
 		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Down:
-		camera.pos.y += (ctrlPressed ? 0.1 : 1);
+		camera.pos.y += 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
 		updateStatusBar();
 		update();
