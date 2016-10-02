@@ -111,7 +111,7 @@ int main() {
 			cv::Mat roi(result, cv::Rect(image_offset.x, image_offset.y, img.cols, img.rows));
 			img.copyTo(roi);
 
-			cv::imwrite((std::string("result/") + std::to_string(id) + ".jpg").c_str(), result);
+			cv::imwrite((std::string("result/") + str_id + ".jpg").c_str(), result);
 
 			// convert the lines
 			center_point = convert(center_point, img.cols, img.rows, result.cols, result.rows, image_offset);

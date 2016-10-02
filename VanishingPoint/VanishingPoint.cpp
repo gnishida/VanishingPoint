@@ -63,11 +63,12 @@ namespace vp {
 		return result;
 	}
 
-	void extractCameraParameters(const std::vector<glm::dvec2>& vps, double& f, double& xrot, double& yrot, double& zrot) {
+	void extractCameraParameters(const std::vector<glm::dvec2>& vps, double& f, double& xrot, double& yrot, double& zrot, glm::vec2& center) {
 		// compute K and R matrices
 		glm::dmat3 K, R;
-		vp::extractCameraMatrix(vps, K, R);
+		vp::extractCameraMatrixByGenApproach(vps, K, R);
 		f = K[0][0];
+		center = glm::vec2(K[2][0], K[2][1]);
 
 		vp::decomposeRotation(R, xrot, yrot, zrot);
 	}
@@ -105,7 +106,7 @@ namespace vp {
 		R[1] = glm::cross(R[2], R[0]);
 	}
 
-	void extractCameraMatrix(const std::vector<glm::dvec2>& vps, double f, const glm::dvec2& origin, double camera_ditance, glm::dvec3& T) {
+	void extractCameraMatrixT(double f, const glm::dvec2& origin, double camera_ditance, glm::dvec3& T) {
 		// define O_c P_1' in Eq (11)
 		glm::dvec3 OP1(origin.x, origin.y, -f);
 

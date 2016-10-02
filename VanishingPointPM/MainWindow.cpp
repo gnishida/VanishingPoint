@@ -13,10 +13,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
 	ui.actionPenVanishingLine->setChecked(true);
 
+	connect(ui.actionClearBackground, SIGNAL(triggered()), this, SLOT(onClearBackground()));
 	connect(ui.actionOpenImage, SIGNAL(triggered()), this, SLOT(onOpenImage()));
 	connect(ui.actionClearLines, SIGNAL(triggered()), this, SLOT(onClearLines()));
 	connect(ui.actionLoadLines, SIGNAL(triggered()), this, SLOT(onLoadLines()));
 	connect(ui.actionSaveLines, SIGNAL(triggered()), this, SLOT(onSaveLines()));
+	connect(ui.actionClearSilhouette, SIGNAL(triggered()), this, SLOT(onClearSilhouette()));
 	connect(ui.actionLoadSilhouette, SIGNAL(triggered()), this, SLOT(onLoadSilhouette()));
 	connect(ui.actionSaveSilhouette, SIGNAL(triggered()), this, SLOT(onSaveSilhouette()));
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
@@ -24,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionComputeVanishingPoint, SIGNAL(triggered()), this, SLOT(onComputeVanishingPoint()));
 	connect(ui.actionComputeCameraMatrix, SIGNAL(triggered()), this, SLOT(onComputeCameraMatrix()));
 	connect(ui.action3DReconstruction, SIGNAL(triggered()), this, SLOT(on3DReconstruction()));
+	connect(ui.action3DReconstructionAll, SIGNAL(triggered()), this, SLOT(on3DReconstructionAll()));
 	connect(ui.actionPenVanishingLine, SIGNAL(triggered()), this, SLOT(onPenChanged()));
 	connect(ui.actionPenSilhouette, SIGNAL(triggered()), this, SLOT(onPenChanged()));
 	connect(ui.actionOption, SIGNAL(triggered()), this, SLOT(onOption()));
@@ -38,6 +41,10 @@ void MainWindow::keyPressEvent(QKeyEvent* e) {
 
 void MainWindow::keyReleaseEvent(QKeyEvent* e) {
 	glWidget->keyReleaseEvent(e);
+}
+
+void MainWindow::onClearBackground() {
+	glWidget->clearBackground();
 }
 
 void MainWindow::onOpenImage() {
@@ -65,6 +72,10 @@ void MainWindow::onSaveLines() {
 	if (filename.isEmpty()) return;
 
 	glWidget->saveLines(filename);
+}
+
+void MainWindow::onClearSilhouette() {
+	glWidget->clearSilhouette();
 }
 
 void MainWindow::onLoadSilhouette() {
@@ -95,7 +106,17 @@ void MainWindow::onComputeCameraMatrix() {
 }
 
 void MainWindow::on3DReconstruction() {
-	glWidget->reconstruct3D();
+	std::vector<float> params = glWidget->reconstruct3D();
+	for (int k = 0; k < params.size(); ++k) {
+		if (k > 0) std::cout << ", ";
+		std::cout << params[k];
+	}
+	std::cout << std::endl;
+	glWidget->update();
+}
+
+void MainWindow::on3DReconstructionAll() {
+	glWidget->reconstruct3DAll();
 	glWidget->update();
 }
 
@@ -110,7 +131,7 @@ void MainWindow::onPenChanged() {
 
 void MainWindow::onOption() {
 	OptionDialog dlg;
-	dlg.setContourLineWidth(glWidget->contourLineWidth);
+	dlg.setContourLineWidth(glWidget->lineWidth);
 	dlg.setHorizontalLeftColor(glWidget->horizontalLeftColor);
 	dlg.setHorizontalRightColor(glWidget->horizontalRightColor);
 	dlg.setVerticalColor(glWidget->verticalColor);
@@ -119,13 +140,13 @@ void MainWindow::onOption() {
 	dlg.setGrammarId(glWidget->grammar_id);
 
 	if (dlg.exec()) {
-		glWidget->contourLineWidth = dlg.getContourLineWidth();
+		glWidget->lineWidth = dlg.getContourLineWidth();
 		glWidget->horizontalLeftColor = dlg.getHorizontalLeftColor();
 		glWidget->horizontalRightColor = dlg.getHorizontalRightColor();
 		glWidget->verticalColor = dlg.getVerticalColor();
 		if (glWidget->grammar_id != dlg.getGrammarId()) {
 			glWidget->grammar_id = dlg.getGrammarId();
-			glWidget->updateGeometry();
+			glWidget->updateGeometry(glWidget->grammars[glWidget->grammar_id], glWidget->pm_params);
 		}
 	}
 }

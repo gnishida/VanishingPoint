@@ -106,7 +106,7 @@ namespace vp {
 		R[1] = glm::cross(R[2], R[0]);
 	}
 
-	void extractCameraMatrix(const std::vector<glm::dvec2>& vps, double f, const glm::dvec2& origin, double camera_ditance, glm::dvec3& T) {
+	void extractCameraMatrixT(double f, const glm::dvec2& origin, double camera_ditance, glm::dvec3& T) {
 		// define O_c P_1' in Eq (11)
 		glm::dvec3 OP1(origin.x, origin.y, -f);
 

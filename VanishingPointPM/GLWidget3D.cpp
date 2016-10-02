@@ -32,15 +32,16 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 
 	// Grammarを読み込む
 	{
-		grammars.resize(4);
+		grammars.resize(5);
 		cga::parseGrammar("cga/contour_01.xml", grammars[0]);
 		cga::parseGrammar("cga/contour_02.xml", grammars[1]);
 		cga::parseGrammar("cga/contour_03.xml", grammars[2]);
 		cga::parseGrammar("cga/contour_04.xml", grammars[3]);
+		cga::parseGrammar("cga/contour_05.xml", grammars[4]);
 	}
 
 	pen_type = PEN_TYPE_VANISHING_LINE;
-	contourLineWidth = 3;
+	lineWidth = 3;
 	horizontalLeftColor = QColor(0, 0, 192);
 	horizontalRightColor = QColor(64, 64, 255);
 	verticalColor = QColor(140, 140, 255);
@@ -58,251 +59,6 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 	glm::mat4 light_pMatrix = glm::ortho<float>(-50, 50, -50, 50, 0.1, 200);
 	glm::mat4 light_mvMatrix = glm::lookAt(-light_dir * 50.0f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	light_mvpMatrix = light_pMatrix * light_mvMatrix;
-}
-
-void GLWidget3D::updateStatusBar() {
-	QString format("rot=(%1, %2, %3), pos=(%4, %5, %6), fov=%7, O=(%8, %9), PM=(");
-	for (int i = 0; i < pm_params.size(); ++i) {
-		if (i > 0) format += ", ";
-		format += "%" + QString::number(10 + i);
-	}
-	format += ")";
-
-	//QString msg = QString("rot=(%1, %2, %3), pos=(%4, %5, %6), fov=%7, O=(%8, %9), size=(%10, %11, %12)").arg(camera.xrot).arg(camera.yrot).arg(camera.zrot).arg(camera.pos.x).arg(camera.pos.y).arg(camera.pos.z).arg(camera.fovy).arg(camera.center.x).arg(camera.center.y).arg(cuboid_size[0]).arg(cuboid_size[1]).arg(cuboid_size[2]);
-	QString msg = format.arg(camera.xrot).arg(camera.yrot).arg(camera.zrot).arg(camera.pos.x).arg(camera.pos.y).arg(camera.pos.z).arg(camera.fovy).arg(camera.center.x).arg(camera.center.y);
-	for (int i = 0; i < pm_params.size(); ++i) {
-		msg = msg.arg(pm_params[i]);
-	}
-	mainWin->statusBar()->showMessage(msg);
-}
-
-/**
- * This event handler is called when the mouse press events occur.
- */
-void GLWidget3D::mousePressEvent(QMouseEvent *e) {
-	if (e->buttons() & Qt::RightButton) { // rotate camera
-		camera.mousePress(e->x(), e->y());
-	}
-	else if (e->buttons() & Qt::MidButton) { // rotate around viewing direction
-		camera.mousePress(e->x(), e->y());
-	}
-	else if (e->buttons() & Qt::LeftButton) { // draw lines
-		if (ctrlPressed) {
-			origin = glm::vec2(e->x(), e->y());
-		}
-		else {
-			if (shiftPressed) {
-				if (pen_type == PEN_TYPE_VANISHING_LINE) {
-					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_RIGHT));
-				}
-				else if (pen_type == PEN_TYPE_SILHOUETTE) {
-					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_RIGHT));
-				}
-			}
-			else if (altPressed) {
-				if (pen_type == PEN_TYPE_VANISHING_LINE) {
-					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_VERTICAL));
-				}
-				else if (pen_type == PEN_TYPE_SILHOUETTE) {
-					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_VERTICAL));
-				}
-			}
-			else {
-				if (pen_type == PEN_TYPE_VANISHING_LINE) {
-					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
-				}
-				else if (pen_type == PEN_TYPE_SILHOUETTE) {
-					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
-				}
-			}
-		}
-		update();
-	}
-}
-
-/**
- * This event handler is called when the mouse release events occur.
- */
-void GLWidget3D::mouseReleaseEvent(QMouseEvent *e) {
-	// remove the line if it is just a point
-	if (pen_type == PEN_TYPE_VANISHING_LINE) {
-		if (lines.size() > 0 && lines.back().start == lines.back().end) {
-			lines.pop_back();
-		}
-	}
-	else if (pen_type == PEN_TYPE_SILHOUETTE) {
-		if (silhouette.size() > 0 && silhouette.back().start == silhouette.back().end) {
-			silhouette.pop_back();
-		}
-	}
-}
-
-/**
- * This event handler is called when the mouse move events occur.
- */
-void GLWidget3D::mouseMoveEvent(QMouseEvent *e) {
-	if (e->buttons() & Qt::RightButton) { // rotate camera
-		if (shiftPressed) { // Move
-			camera.move(e->x(), e->y());
-		}
-		else {
-			camera.rotate(e->x(), e->y(), (ctrlPressed ? 0.1 : 1));
-		}
-	}
-	else if (e->buttons() & Qt::MidButton) { // rotate around Z axis
-		camera.rotateAroundZ(e->x(), e->y(), (ctrlPressed ? 0.1 : 1));
-	}
-	else if (e->buttons() & Qt::LeftButton) { // draw lines
-		if (pen_type == PEN_TYPE_VANISHING_LINE) {
-			if (lines.size() > 0) {
-				lines.back().end = glm::vec2(e->x(), e->y());
-			}
-		}
-		else if (pen_type == PEN_TYPE_SILHOUETTE) {
-			if (silhouette.size() > 0) {
-				silhouette.back().end = glm::vec2(e->x(), e->y());
-			}
-		}
-	}
-	updateStatusBar();
-	update();
-}
-
-void GLWidget3D::wheelEvent(QWheelEvent* e) {
-	camera.changeFov(e->delta() * 0.05, (ctrlPressed ? 0.1 : 1), width(), height());
-	updateStatusBar();
-	update();
-}
-
-/**
- * This function is called once before the first call to paintGL() or resizeGL().
- */
-void GLWidget3D::initializeGL() {
-	// init glew
-	GLenum err = glewInit();
-	if (err != GLEW_OK) {
-		std::cout << "Error: " << glewGetErrorString(err) << std::endl;
-	}
-
-	if (glewIsSupported("GL_VERSION_4_2"))
-		printf("Ready for OpenGL 4.2\n");
-	else {
-		printf("OpenGL 4.2 not supported\n");
-		exit(1);
-	}
-	const GLubyte* text = glGetString(GL_VERSION);
-	printf("VERSION: %s\n", text);
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-
-	glEnable(GL_TEXTURE_2D);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-	glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-	glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-	glDisable(GL_TEXTURE_2D);
-
-	glEnable(GL_TEXTURE_3D);
-	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glDisable(GL_TEXTURE_3D);
-
-	glEnable(GL_TEXTURE_2D_ARRAY);
-	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glDisable(GL_TEXTURE_2D_ARRAY);
-
-	////////////////////////////////
-	renderManager.init("", "", "", true, 8192);
-	renderManager.resize(this->width(), this->height());
-	renderManager.renderingMode = RenderManager::RENDERING_MODE_LINE;
-
-	glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "tex0"), 0);//tex0: 0
-
-	camera.changeFov(0, 1, width(), height());
-
-
-	updateGeometry();
-	updateStatusBar();
-}
-
-/**
- * This function is called whenever the widget has been resized.
- */
-void GLWidget3D::resizeGL(int width, int height) {
-	height = height ? height : 1;
-	glViewport(0, 0, width, height);
-	camera.updatePMatrix(width, height);
-
-	renderManager.resize(width, height);
-}
-
-/**
- * This function is called whenever the widget needs to be painted.
- */
-void GLWidget3D::paintEvent(QPaintEvent *event) {
-	// OpenGLで描画
-	makeCurrent();
-
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-
-	render();
-
-	// REMOVE
-	glActiveTexture(GL_TEXTURE0);
-
-	// OpenGLの設定を元に戻す
-	glShadeModel(GL_FLAT);
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-
-	// draw background image
-	QPainter painter(this);
-	painter.setOpacity(0.5f);
-	painter.drawImage(0, 0, image);
-
-	// draw lines
-	painter.setOpacity(1.0f);
-	for (auto line : lines) {
-		if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_LEFT) {
-			painter.setPen(QPen(horizontalLeftColor, contourLineWidth));
-		}
-		else if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_RIGHT) {
-			painter.setPen(QPen(horizontalRightColor, contourLineWidth));
-		}
-		else {
-			painter.setPen(QPen(verticalColor, contourLineWidth));
-		}
-		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
-	}
-
-	// draw silhouette
-	painter.setPen(QPen(silhouetteColor, silhouetteWidth));
-	for (auto line : silhouette) {
-		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
-	}
-
-	// draw origin
-	painter.setPen(QPen(QColor(255, 255, 0), 1, Qt::SolidLine));
-	painter.setBrush(QBrush(QColor(255, 255, 0)));
-	painter.drawEllipse(origin.x - 3, origin.y - 3, 7, 7);
-
-	// draw the center of the building
-	glm::vec2 pp = vp::projectPoint(camera.mvpMatrix, glm::dvec3(0, 0, 0));
-	painter.setPen(QPen(QColor(255, 0, 0), 1, Qt::SolidLine));
-	painter.setBrush(QBrush(QColor(255, 0, 0)));
-	painter.drawEllipse((pp.x + 1) * 0.5 * width() - 3, (1 - pp.y) * 0.5 * height() - 3, 7, 7);
-
-	painter.end();
-
-	glEnable(GL_DEPTH_TEST);
 }
 
 /**
@@ -563,8 +319,16 @@ void GLWidget3D::render() {
 	glActiveTexture(GL_TEXTURE0);
 }
 
+void GLWidget3D::clearBackground() {
+	image_loaded = false;
+	mainWin->setWindowTitle("Vanishing Point");
+
+	update();
+}
+
 void GLWidget3D::loadImage(const QString& filename) {
 	image.load(filename);
+	image_loaded = true;
 
 	// scale the image such that it fits to the window
 	float scale = std::min((float)width() / image.width(), (float)height() / image.height());
@@ -575,16 +339,13 @@ void GLWidget3D::loadImage(const QString& filename) {
 	painter.fillRect(0, 0, image.width(), image.height(), QBrush(QColor(255, 255, 255)));
 	painter.drawImage((width() - newImage.width()) / 2, (height() - newImage.height()) / 2, newImage);
 
+	mainWin->setWindowTitle(QString("Vanishing Point - ") + filename);
+
 	update();
 }
 
 void GLWidget3D::clearLines() {
-	if (pen_type == PEN_TYPE_VANISHING_LINE) {
-		lines.clear();
-	}
-	else if (pen_type == PEN_TYPE_SILHOUETTE) {
-		silhouette.clear();
-	}
+	lines.clear();
 	update();
 }
 
@@ -599,7 +360,7 @@ void GLWidget3D::loadLines(const QString& filename) {
 			QString line = in.readLine();
 			if (line.isNull()) break;
 			QStringList list = line.split(QRegExp("(\t| )"));
-			
+
 			if (list.size() == 2) {
 				origin = glm::dvec2(list[0].toFloat(), list[1].toFloat());
 			}
@@ -614,6 +375,7 @@ void GLWidget3D::loadLines(const QString& filename) {
 
 		file.close();
 	}
+
 	update();
 }
 
@@ -628,6 +390,11 @@ void GLWidget3D::saveLines(const QString& filename) {
 		}
 	}
 	file.close();
+}
+
+void GLWidget3D::clearSilhouette() {
+	silhouette.clear();
+	update();
 }
 
 void GLWidget3D::loadSilhouette(const QString& filename) {
@@ -651,6 +418,7 @@ void GLWidget3D::loadSilhouette(const QString& filename) {
 
 		file.close();
 	}
+
 	update();
 }
 
@@ -749,7 +517,7 @@ void GLWidget3D::computeCameraMatrix() {
 	// compute T matrix
 	glm::dvec3 T;
 	double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
-	vp::extractCameraMatrix(vps, f, glm::vec2(origin.x / width() * 2 - 1, 1 - origin.y / height() * 2) - camera.center, camera_distance, T);
+	vp::extractCameraMatrixT(f, glm::vec2(origin.x / width() * 2 - 1, 1 - origin.y / height() * 2) - camera.center, camera_distance, T);
 	camera.pos = glm::vec3(-T.x, -T.y, -T.z);
 
 	// update camera
@@ -759,7 +527,49 @@ void GLWidget3D::computeCameraMatrix() {
 	update();
 }
 
-void GLWidget3D::reconstruct3D() {
+void GLWidget3D::reconstruct3DAll() {
+	QDir data_dir("data/");
+	QStringList files = data_dir.entryList(QDir::NoDotAndDotDot | QDir::Files);// , QDir::DirsFirst);//(QDir::Filter::Files,QDir::SortFlag::NoSort)
+	for (auto file : files) {
+		if (file.endsWith(".jpg") || file.endsWith(".png")) {
+			std::cout << "------------------------------------------------" << std::endl;
+			std::cout << file.toUtf8().constData() << " ..." << std::endl;
+
+			QStringList list = file.split(".");
+			int id = list[0].toInt();
+
+			// determine the grammar id
+			if (id == 36 || id == 37 || id == 39) {
+				// cylinder
+				grammar_id = 1;
+			}
+			else if (id == 13 || id == 15 || id == 16 || id == 22 || id == 30 || id == 31) {
+				// corner cut
+				grammar_id = 2;
+			}
+			else if (id == 2 || id == 24) {
+				// curved corner
+				grammar_id = 3;
+			}
+
+
+			// load vanishing lines
+			loadLines(QString("data/lines_%1.txt").arg(id));
+
+			// load silhouette
+			loadSilhouette(QString("data/%1.ctr").arg(list[0]));
+
+			std::vector<float> params = reconstruct3D();
+			for (int k = 0; k < params.size(); ++k) {
+				if (k > 0) std::cout << ", ";
+				std::cout << params[k];
+			}
+			std::cout << std::endl;
+		}
+	}
+}
+
+std::vector<float> GLWidget3D::reconstruct3D() {
 	time_t start = clock();
 
 	/////////////////////////////////////////////////////////////////////////
@@ -805,14 +615,12 @@ void GLWidget3D::reconstruct3D() {
 
 	/////////////////////////////////////////////////////////////////////////
 	// do random walk to find good initial PM parameter values
-	cga::CGA cga;
-
 	renderManager.renderingMode = RenderManager::RENDERING_MODE_CONTOUR;
 
 	std::vector<float> best_params(grammars[grammar_id].attrs.size() + 2);
 	double diff_min = std::numeric_limits<double>::max();
 	printf("find good values by random sampling: ");
-	for (int iter = 0; iter < 300; ++iter) {
+	for (int iter = 0; iter < 500; ++iter) {
 		printf("\rfind good initial values by random sampling: %d", iter + 1);
 
 		// randomly pick the initial values
@@ -825,21 +633,21 @@ void GLWidget3D::reconstruct3D() {
 		// compute the camera pos
 		glm::dvec3 T;
 		double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
-		vp::extractCameraMatrix(vps, f, glm::vec2(cur_params[0] * 2 - 1, cur_params[1] * 2 - 1) - camera.center, camera_distance, T);
+		vp::extractCameraMatrixT(f, glm::vec2(cur_params[0] * 2 - 1, cur_params[1] * 2 - 1) - camera.center, camera_distance, T);
 		camera.pos = glm::vec3(-T.x, -T.y, -T.z);
 
 		// update camera
 		camera.updatePMatrix(width(), height());
 		
 		cv::Mat rendered_image;
-		renderImage(cga, grammars[grammar_id], std::vector<float>(cur_params.begin() + 2, cur_params.end()), rendered_image);
+		renderImage(grammars[grammar_id], std::vector<float>(cur_params.begin() + 2, cur_params.end()), rendered_image);
 
 		// compute the difference
 		double diff = distanceMap(rendered_image, silhouette_dist_map);
 
 		// coordinate descent
 		float delta = 0.1;
-		for (int iter2 = 0; iter2 < 10; ++iter2) {
+		for (int iter2 = 0; iter2 < 20; ++iter2) {
 			for (int k = 0; k < cur_params.size(); ++k) {
 				// option 1
 				std::vector<float> next_params1 = cur_params;
@@ -847,14 +655,14 @@ void GLWidget3D::reconstruct3D() {
 				if (k < 2) {
 					glm::dvec3 T;
 					double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
-					vp::extractCameraMatrix(vps, f, glm::vec2(next_params1[0] * 2 - 1, next_params1[1] * 2 - 1) - camera.center, camera_distance, T);
+					vp::extractCameraMatrixT(f, glm::vec2(next_params1[0] * 2 - 1, next_params1[1] * 2 - 1) - camera.center, camera_distance, T);
 					camera.pos = glm::vec3(-T.x, -T.y, -T.z);
 
 					// update camera
 					camera.updatePMatrix(width(), height());
 				}
 				cv::Mat rendered_image1;
-				renderImage(cga, grammars[grammar_id], std::vector<float>(next_params1.begin() + 2, next_params1.end()), rendered_image1);
+				renderImage(grammars[grammar_id], std::vector<float>(next_params1.begin() + 2, next_params1.end()), rendered_image1);
 				double diff1 = distanceMap(rendered_image1, silhouette_dist_map);
 
 				// option 2
@@ -863,14 +671,14 @@ void GLWidget3D::reconstruct3D() {
 				if (k < 2) {
 					glm::dvec3 T;
 					double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
-					vp::extractCameraMatrix(vps, f, glm::vec2(next_params2[0] * 2 - 1, next_params2[1] * 2 - 1) - camera.center, camera_distance, T);
+					vp::extractCameraMatrixT(f, glm::vec2(next_params2[0] * 2 - 1, next_params2[1] * 2 - 1) - camera.center, camera_distance, T);
 					camera.pos = glm::vec3(-T.x, -T.y, -T.z);
 
 					// update camera
 					camera.updatePMatrix(width(), height());
 				}
 				cv::Mat rendered_image2;
-				renderImage(cga, grammars[grammar_id], std::vector<float>(next_params2.begin() + 2, next_params2.end()), rendered_image2);
+				renderImage(grammars[grammar_id], std::vector<float>(next_params2.begin() + 2, next_params2.end()), rendered_image2);
 				double diff2 = distanceMap(rendered_image2, silhouette_dist_map);
 
 				if (diff1 < diff2 && diff1 < diff) {
@@ -899,7 +707,7 @@ void GLWidget3D::reconstruct3D() {
 	// set the camera pos
 	glm::dvec3 T;
 	double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
-	vp::extractCameraMatrix(vps, f, glm::vec2(best_params[0] * 2 - 1, best_params[1] * 2 - 1) - camera.center, camera_distance, T);
+	vp::extractCameraMatrixT(f, glm::vec2(best_params[0] * 2 - 1, best_params[1] * 2 - 1) - camera.center, camera_distance, T);
 	camera.pos = glm::vec3(-T.x, -T.y, -T.z);
 	camera.updatePMatrix(width(), height());
 
@@ -909,28 +717,43 @@ void GLWidget3D::reconstruct3D() {
 		pm_params.push_back(best_params[k]);
 	}
 
-	updateGeometry();
+	updateGeometry(grammars[grammar_id], pm_params);
 
 	updateStatusBar();
 	update();
 
 	time_t end = clock();
 	std::cout << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;
+
+	// return all the parameters
+	std::vector<float> ret;
+	ret.push_back(camera.xrot);
+	ret.push_back(camera.yrot);
+	ret.push_back(camera.zrot);
+	ret.push_back(camera.fovy);
+	ret.push_back(camera.pos.x);
+	ret.push_back(camera.pos.y);
+	ret.push_back(camera.pos.z);
+	std::vector<std::string> keys;
+	for (auto it = grammars[grammar_id].attrs.begin(); it != grammars[grammar_id].attrs.end(); ++it) {
+		keys.push_back(it->first);
+	}
+	for (int k = 0; k < pm_params.size(); ++k) {
+		ret.push_back(pm_params[k] * (grammars[grammar_id].attrs[keys[k]].range_end - grammars[grammar_id].attrs[keys[k]].range_start) + grammars[grammar_id].attrs[keys[k]].range_start);
+	}
+
+	return ret;
 }
 
-void GLWidget3D::renderImage(cga::CGA& cga, cga::Grammar& grammar, const std::vector<float>& pm_params, cv::Mat& rendered_image) {
-	cga.setParamValues(grammar, pm_params);
-
-	// set axiom
-	boost::shared_ptr<cga::Shape> start = boost::shared_ptr<cga::Shape>(new cga::Rectangle("Start", "", glm::translate(glm::rotate(glm::mat4(), -3.141592f * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), glm::mat4(), 0, 0, glm::vec3(1, 1, 1)));
-	cga.stack.push_back(start);
-
-	// generate 3d model
-	cga.derive(grammar, true);
-	std::vector<boost::shared_ptr<glutils::Face> > faces;
-	renderManager.removeObjects();
-	cga.generateGeometry(faces, true);
-	renderManager.addFaces(faces, true);
+/**
+ * Generate an image using the selected grammar and the PM parameter values.
+ *
+ * @param grammar			grammar
+ * @param pm_params			PM parameter values
+ * @param rendered_image	rendered image [OUT]
+ */
+void GLWidget3D::renderImage(cga::Grammar& grammar, const std::vector<float>& pm_params, cv::Mat& rendered_image) {
+	updateGeometry(grammar, pm_params);
 
 	render();
 	QImage img = grabFrameBuffer();
@@ -938,6 +761,13 @@ void GLWidget3D::renderImage(cga::CGA& cga, cga::Grammar& grammar, const std::ve
 	cv::cvtColor(rendered_image, rendered_image, cv::COLOR_BGRA2BGR);
 }
 
+/**
+ * Compute the distance between the rendered image and the target.
+ *
+ * @param rendered_image		rendered image
+ * @param reference_dist_map	distance map of the target
+ * @return						distance
+ */
 double GLWidget3D::distanceMap(cv::Mat rendered_image, const cv::Mat& reference_dist_map) {
 	cv::cvtColor(rendered_image, rendered_image, CV_BGR2GRAY);
 
@@ -955,11 +785,18 @@ double GLWidget3D::distanceMap(cv::Mat rendered_image, const cv::Mat& reference_
 	return diff_mat.at<double>(0, 0);
 }
 
-void GLWidget3D::setupGeometry(cga::Grammar& grammar, const std::vector<float>& pm_params, std::vector<boost::shared_ptr<glutils::Face>>& faces) {
+/**
+ * Update the geometry on GPU using the selected grammar and the PM parameter values.
+ *
+ * @param grammar		grammar
+ * @param pm_params		PM parameter values
+ */
+void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>& pm_params) {
+	std::vector<boost::shared_ptr<glutils::Face>> faces;
+	
 	// setup CGA
 	cga::CGA cga;
 	cga.modelMat = glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0));
-
 	cga.setParamValues(grammar, pm_params);
 
 	// set axiom
@@ -968,20 +805,28 @@ void GLWidget3D::setupGeometry(cga::Grammar& grammar, const std::vector<float>& 
 
 	// generate 3d model
 	cga.derive(grammar, true);
-	faces.clear();
 	cga.generateGeometry(faces, true);
-}
-
-void GLWidget3D::updateGeometry() {
-	//std::vector<Vertex> vertices;
-	//glutils::drawBox(cuboid_size[0], cuboid_size[1], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), vertices);
-	//glutils::drawCylinderZ(cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[0], cuboid_size[2], glm::vec4(1, 1, 1, 1), glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, -cuboid_size[2] * 0.5)), vertices, 36);
-	//renderManager.addObject("box", "", vertices, true);
-
-	std::vector<boost::shared_ptr<glutils::Face>> faces;
-	setupGeometry(grammars[grammar_id], pm_params, faces);
 	renderManager.removeObjects();
 	renderManager.addFaces(faces, true);
+}
+
+void GLWidget3D::updateStatusBar() {
+	QString format("rot=(%1, %2, %3), pos=(%4, %5, %6), fov=%7, O=(%8, %9), PM=(");
+	for (int i = 0; i < pm_params.size(); ++i) {
+		if (i > 0) format += ", ";
+		format += "%" + QString::number(10 + i);
+	}
+	format += ")";
+
+	QString msg = format.arg(camera.xrot).arg(camera.yrot).arg(camera.zrot).arg(camera.pos.x).arg(camera.pos.y).arg(camera.pos.z).arg(camera.fovy).arg(camera.center.x).arg(camera.center.y);
+
+	// add PM parameter values (instead of normalized ones!)
+	int k = 0;
+	for (auto it = grammars[grammar_id].attrs.begin(); it != grammars[grammar_id].attrs.end(); ++it, ++k) {
+		msg = msg.arg(pm_params[k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
+	}
+
+	mainWin->statusBar()->showMessage(msg);
 }
 
 void GLWidget3D::keyPressEvent(QKeyEvent *e) {
@@ -1001,7 +846,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 	case Qt::Key_1:
 		if (pm_params.size() > 0) {
 			pm_params[0] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
-			updateGeometry();
+			updateGeometry(grammars[grammar_id], pm_params);
 			updateStatusBar();
 			update();
 		}
@@ -1009,7 +854,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 	case Qt::Key_2:
 		if (pm_params.size() > 1) {
 			pm_params[1] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
-			updateGeometry();
+			updateGeometry(grammars[grammar_id], pm_params);
 			updateStatusBar();
 			update();
 		}
@@ -1017,7 +862,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 	case Qt::Key_3:
 		if (pm_params.size() > 2) {
 			pm_params[2] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
-			updateGeometry();
+			updateGeometry(grammars[grammar_id], pm_params);
 			updateStatusBar();
 			update();
 		}
@@ -1025,7 +870,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 	case Qt::Key_4:
 		if (pm_params.size() > 3) {
 			pm_params[3] += 0.5 * (ctrlPressed ? 0.01 : 0.1) * (altPressed ? -1 : 1);
-			updateGeometry();
+			updateGeometry(grammars[grammar_id], pm_params);
 			updateStatusBar();
 		}
 		update();
@@ -1079,3 +924,236 @@ void GLWidget3D::keyReleaseEvent(QKeyEvent* e) {
 	}
 }
 
+/**
+ * This function is called once before the first call to paintGL() or resizeGL().
+ */
+void GLWidget3D::initializeGL() {
+	// init glew
+	GLenum err = glewInit();
+	if (err != GLEW_OK) {
+		std::cout << "Error: " << glewGetErrorString(err) << std::endl;
+	}
+
+	if (glewIsSupported("GL_VERSION_4_2"))
+		printf("Ready for OpenGL 4.2\n");
+	else {
+		printf("OpenGL 4.2 not supported\n");
+		exit(1);
+	}
+	const GLubyte* text = glGetString(GL_VERSION);
+	printf("VERSION: %s\n", text);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+
+	glEnable(GL_TEXTURE_2D);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+	glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+	glDisable(GL_TEXTURE_2D);
+
+	glEnable(GL_TEXTURE_3D);
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glDisable(GL_TEXTURE_3D);
+
+	glEnable(GL_TEXTURE_2D_ARRAY);
+	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glDisable(GL_TEXTURE_2D_ARRAY);
+
+	////////////////////////////////
+	renderManager.init("", "", "", true, 8192);
+	renderManager.resize(this->width(), this->height());
+	renderManager.renderingMode = RenderManager::RENDERING_MODE_LINE;
+
+	glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "tex0"), 0);//tex0: 0
+
+	camera.changeFov(0, 1, width(), height());
+
+
+	updateGeometry(grammars[grammar_id], pm_params);
+	updateStatusBar();
+}
+
+/**
+ * This function is called whenever the widget has been resized.
+ */
+void GLWidget3D::resizeGL(int width, int height) {
+	height = height ? height : 1;
+	glViewport(0, 0, width, height);
+	camera.updatePMatrix(width, height);
+
+	renderManager.resize(width, height);
+}
+
+/**
+ * This function is called whenever the widget needs to be painted.
+ */
+void GLWidget3D::paintEvent(QPaintEvent *event) {
+	// OpenGLで描画
+	makeCurrent();
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+
+	render();
+
+	// REMOVE
+	glActiveTexture(GL_TEXTURE0);
+
+	// OpenGLの設定を元に戻す
+	glShadeModel(GL_FLAT);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+
+	QPainter painter(this);
+
+	// draw background image
+	if (image_loaded) {
+		painter.setOpacity(0.5f);
+		painter.drawImage(0, 0, image);
+	}
+
+	// draw lines
+	painter.setOpacity(1.0f);
+	for (auto line : lines) {
+		if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_LEFT) {
+			painter.setPen(QPen(horizontalLeftColor, lineWidth));
+		}
+		else if (line.type == vp::VanishingLine::TYPE_HORIZONTAL_RIGHT) {
+			painter.setPen(QPen(horizontalRightColor, lineWidth));
+		}
+		else {
+			painter.setPen(QPen(verticalColor, lineWidth));
+		}
+		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
+	}
+
+	// draw silhouette
+	painter.setPen(QPen(silhouetteColor, silhouetteWidth));
+	for (auto line : silhouette) {
+		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
+	}
+
+	// draw origin
+	painter.setPen(QPen(QColor(255, 255, 0), 1, Qt::SolidLine));
+	painter.setBrush(QBrush(QColor(255, 255, 0)));
+	painter.drawEllipse(origin.x - 3, origin.y - 3, 7, 7);
+
+	// draw the center of the building
+	glm::vec2 pp = vp::projectPoint(camera.mvpMatrix, glm::dvec3(0, 0, 0));
+	painter.setPen(QPen(QColor(255, 0, 0), 1, Qt::SolidLine));
+	painter.setBrush(QBrush(QColor(255, 0, 0)));
+	painter.drawEllipse((pp.x + 1) * 0.5 * width() - 3, (1 - pp.y) * 0.5 * height() - 3, 7, 7);
+
+	painter.end();
+
+	glEnable(GL_DEPTH_TEST);
+}
+
+/**
+ * This event handler is called when the mouse press events occur.
+ */
+void GLWidget3D::mousePressEvent(QMouseEvent *e) {
+	if (e->buttons() & Qt::RightButton) { // rotate camera
+		camera.mousePress(e->x(), e->y());
+	}
+	else if (e->buttons() & Qt::MidButton) { // rotate around viewing direction
+		camera.mousePress(e->x(), e->y());
+	}
+	else if (e->buttons() & Qt::LeftButton) { // draw lines
+		if (ctrlPressed) {
+			origin = glm::vec2(e->x(), e->y());
+		}
+		else {
+			if (shiftPressed) {
+				if (pen_type == PEN_TYPE_VANISHING_LINE) {
+					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_RIGHT));
+				}
+				else if (pen_type == PEN_TYPE_SILHOUETTE) {
+					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_RIGHT));
+				}
+			}
+			else if (altPressed) {
+				if (pen_type == PEN_TYPE_VANISHING_LINE) {
+					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_VERTICAL));
+				}
+				else if (pen_type == PEN_TYPE_SILHOUETTE) {
+					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_VERTICAL));
+				}
+			}
+			else {
+				if (pen_type == PEN_TYPE_VANISHING_LINE) {
+					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
+				}
+				else if (pen_type == PEN_TYPE_SILHOUETTE) {
+					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
+				}
+			}
+		}
+		update();
+	}
+}
+
+/**
+ * This event handler is called when the mouse move events occur.
+ */
+void GLWidget3D::mouseMoveEvent(QMouseEvent *e) {
+	if (e->buttons() & Qt::RightButton) { // rotate camera
+		if (shiftPressed) { // Move
+			camera.move(e->x(), e->y());
+		}
+		else {
+			camera.rotate(e->x(), e->y(), (ctrlPressed ? 0.1 : 1));
+		}
+	}
+	else if (e->buttons() & Qt::MidButton) { // rotate around Z axis
+		camera.rotateAroundZ(e->x(), e->y(), (ctrlPressed ? 0.1 : 1));
+	}
+	else if (e->buttons() & Qt::LeftButton) { // draw lines
+		if (pen_type == PEN_TYPE_VANISHING_LINE) {
+			if (lines.size() > 0) {
+				lines.back().end = glm::vec2(e->x(), e->y());
+			}
+		}
+		else if (pen_type == PEN_TYPE_SILHOUETTE) {
+			if (silhouette.size() > 0) {
+				silhouette.back().end = glm::vec2(e->x(), e->y());
+			}
+		}
+	}
+	updateStatusBar();
+	update();
+}
+
+/**
+ * This event handler is called when the mouse release events occur.
+ */
+void GLWidget3D::mouseReleaseEvent(QMouseEvent *e) {
+	if (e->button() == Qt::LeftButton) {
+		// remove the line if it is just a point
+		if (pen_type == PEN_TYPE_VANISHING_LINE) {
+			if (lines.size() > 0 && lines.back().start == lines.back().end) {
+				lines.pop_back();
+			}
+		}
+		else if (pen_type == PEN_TYPE_SILHOUETTE) {
+			if (silhouette.size() > 0 && silhouette.back().start == silhouette.back().end) {
+				silhouette.pop_back();
+			}
+		}
+	}
+}
+
+void GLWidget3D::wheelEvent(QWheelEvent* e) {
+	camera.changeFov(e->delta() * 0.05, (ctrlPressed ? 0.1 : 1), width(), height());
+	updateStatusBar();
+	update();
+}

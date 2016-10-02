@@ -731,7 +731,7 @@ void GLWidget3D::computeCameraMatrix() {
 	glm::dvec3 T;
 	double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
 	//std::cout << "camera_distance: " << camera_distance << std::endl;
-	vp::extractCameraMatrix(vps, f, glm::vec2(origin.x / width() * 2 - 1, 1 - origin.y / height() * 2) - camera.center, camera_distance, T);
+	vp::extractCameraMatrixT(f, glm::vec2(origin.x / width() * 2 - 1, 1 - origin.y / height() * 2) - camera.center, camera_distance, T);
 	//std::cout << "T: " << glm::to_string(T) << std::endl;
 	camera.pos = glm::vec3(-T.x, -T.y, -T.z);
 

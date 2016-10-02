@@ -15,6 +15,7 @@ public:
 	void move(int mouse_x, int mouse_y);
 	void updatePMatrix(int width,int height);
 	void updateMVPMatrix();
+	float f();
 
 public:
 	glm::vec2 center;

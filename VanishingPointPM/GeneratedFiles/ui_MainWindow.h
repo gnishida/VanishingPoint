@@ -41,6 +41,9 @@ public:
     QAction *actionSaveSilhouette;
     QAction *actionPenVanishingLine;
     QAction *actionPenSilhouette;
+    QAction *action3DReconstructionAll;
+    QAction *actionClearSilhouette;
+    QAction *actionClearBackground;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuFile;
@@ -87,6 +90,12 @@ public:
         actionPenSilhouette = new QAction(MainWindowClass);
         actionPenSilhouette->setObjectName(QStringLiteral("actionPenSilhouette"));
         actionPenSilhouette->setCheckable(true);
+        action3DReconstructionAll = new QAction(MainWindowClass);
+        action3DReconstructionAll->setObjectName(QStringLiteral("action3DReconstructionAll"));
+        actionClearSilhouette = new QAction(MainWindowClass);
+        actionClearSilhouette->setObjectName(QStringLiteral("actionClearSilhouette"));
+        actionClearBackground = new QAction(MainWindowClass);
+        actionClearBackground->setObjectName(QStringLiteral("actionClearBackground"));
         centralWidget = new QWidget(MainWindowClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         MainWindowClass->setCentralWidget(centralWidget);
@@ -112,12 +121,14 @@ public:
         menuBar->addAction(menuFile->menuAction());
         menuBar->addAction(menuEdit->menuAction());
         menuBar->addAction(menuTool->menuAction());
+        menuFile->addAction(actionClearBackground);
         menuFile->addAction(actionOpenImage);
         menuFile->addSeparator();
         menuFile->addAction(actionClearLines);
         menuFile->addAction(actionLoadLines);
         menuFile->addAction(actionSaveLines);
         menuFile->addSeparator();
+        menuFile->addAction(actionClearSilhouette);
         menuFile->addAction(actionLoadSilhouette);
         menuFile->addAction(actionSaveSilhouette);
         menuFile->addSeparator();
@@ -126,6 +137,7 @@ public:
         menuTool->addAction(actionComputeVanishingPoint);
         menuTool->addAction(actionComputeCameraMatrix);
         menuTool->addAction(action3DReconstruction);
+        menuTool->addAction(action3DReconstructionAll);
         menuTool->addSeparator();
         menuTool->addAction(menuPen->menuAction());
         menuTool->addAction(actionOption);
@@ -158,6 +170,9 @@ public:
         actionSaveSilhouette->setText(QApplication::translate("MainWindowClass", "Save Silhouette", 0));
         actionPenVanishingLine->setText(QApplication::translate("MainWindowClass", "Vanishing Line", 0));
         actionPenSilhouette->setText(QApplication::translate("MainWindowClass", "Silhouette", 0));
+        action3DReconstructionAll->setText(QApplication::translate("MainWindowClass", "3D Reconstruction for All", 0));
+        actionClearSilhouette->setText(QApplication::translate("MainWindowClass", "Clear Silhouette", 0));
+        actionClearBackground->setText(QApplication::translate("MainWindowClass", "Clear Background", 0));
         menuFile->setTitle(QApplication::translate("MainWindowClass", "File", 0));
         menuEdit->setTitle(QApplication::translate("MainWindowClass", "Edit", 0));
         menuTool->setTitle(QApplication::translate("MainWindowClass", "Tool", 0));

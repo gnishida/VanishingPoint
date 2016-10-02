@@ -18,16 +18,19 @@ protected:
 	void keyReleaseEvent(QKeyEvent* e);
 
 public slots:
+	void onClearBackground();
 	void onOpenImage();
 	void onClearLines();
 	void onLoadLines();
 	void onSaveLines();
+	void onClearSilhouette();
 	void onLoadSilhouette();
 	void onSaveSilhouette();
 	void onUndo();
 	void onComputeVanishingPoint();
 	void onComputeCameraMatrix();
 	void on3DReconstruction();
+	void on3DReconstructionAll();
 	void onPenChanged();
 	void onOption();
 

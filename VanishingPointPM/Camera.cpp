@@ -2,7 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #ifndef M_PI
-#define M_PI	3.1415926535
+#define M_PI	3.141592653589
 #endif
 
 Camera::Camera() {
@@ -73,8 +73,8 @@ void Camera::move(int mouse_x, int mouse_y) {
  */
 void Camera::updatePMatrix(int width,int height) {
 	float aspect = (float)width / (float)height;
-	float zfar = 3000.0f;
-	float znear = 0.1f;
+	float zfar = 1000.0f;
+	float znear = 1.0f;
 	float f = 1.0f / tan(fovy * M_PI / 360.0f);
 
 	// projection行列
@@ -103,4 +103,8 @@ void Camera::updateMVPMatrix() {
 
 	// create model view projection matrix
 	mvpMatrix = pMatrix * mvMatrix;
+}
+
+float Camera::f() {
+	return 1.0f / tan(fovy / 180.0f * M_PI * 0.5);
 }

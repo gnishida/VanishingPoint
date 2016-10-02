@@ -27,12 +27,14 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionClearBackground"/>
     <addaction name="actionOpenImage"/>
     <addaction name="separator"/>
     <addaction name="actionClearLines"/>
     <addaction name="actionLoadLines"/>
     <addaction name="actionSaveLines"/>
     <addaction name="separator"/>
+    <addaction name="actionClearSilhouette"/>
     <addaction name="actionLoadSilhouette"/>
     <addaction name="actionSaveSilhouette"/>
     <addaction name="separator"/>
@@ -58,6 +60,7 @@
     <addaction name="actionComputeVanishingPoint"/>
     <addaction name="actionComputeCameraMatrix"/>
     <addaction name="action3DReconstruction"/>
+    <addaction name="action3DReconstructionAll"/>
     <addaction name="separator"/>
     <addaction name="menuPen"/>
     <addaction name="actionOption"/>
@@ -163,6 +166,21 @@
    </property>
    <property name="text">
     <string>Silhouette</string>
+   </property>
+  </action>
+  <action name="action3DReconstructionAll">
+   <property name="text">
+    <string>3D Reconstruction for All</string>
+   </property>
+  </action>
+  <action name="actionClearSilhouette">
+   <property name="text">
+    <string>Clear Silhouette</string>
+   </property>
+  </action>
+  <action name="actionClearBackground">
+   <property name="text">
+    <string>Clear Background</string>
    </property>
   </action>
  </widget>
