@@ -12,7 +12,6 @@
 #include <QFileDialog>
 #include "GrammarParser.h"
 #include "Rectangle.h"
-#include "BuildingMassEstimation.h"
 #include "Utils.h"
 #include <time.h>
 

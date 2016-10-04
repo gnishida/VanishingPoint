@@ -89,9 +89,6 @@
     <ClCompile Include="Asset.cpp">
       <Filter>Source Files\cga</Filter>
     </ClCompile>
-    <ClCompile Include="BoundingBox.cpp">
-      <Filter>Source Files\cga</Filter>
-    </ClCompile>
     <ClCompile Include="CenterOperator.cpp">
       <Filter>Source Files\cga</Filter>
     </ClCompile>
@@ -257,9 +254,6 @@
     <ClCompile Include="OffsetOperator.cpp">
       <Filter>Source Files\cga</Filter>
     </ClCompile>
-    <ClCompile Include="BuildingMassEstimation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h">
@@ -308,9 +302,6 @@
     </ClInclude>
     <ClInclude Include="Vertex.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BoundingBox.h">
-      <Filter>Source Files\cga</Filter>
     </ClInclude>
     <ClInclude Include="Asset.h">
       <Filter>Source Files\cga</Filter>
@@ -479,9 +470,6 @@
     </ClInclude>
     <ClInclude Include="OffsetOperator.h">
       <Filter>Source Files\cga</Filter>
-    </ClInclude>
-    <ClInclude Include="BuildingMassEstimation.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
