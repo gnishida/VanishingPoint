@@ -462,14 +462,14 @@
     <ClInclude Include="UShapeTaper.h">
       <Filter>Source Files\cga</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="Shape.h">
       <Filter>Source Files\cga</Filter>
     </ClInclude>
     <ClInclude Include="OffsetOperator.h">
       <Filter>Source Files\cga</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
