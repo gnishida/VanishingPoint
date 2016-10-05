@@ -17,8 +17,8 @@
 
 GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers)) {
 	this->mainWin = parent;
-	shiftPressed = false;
 	ctrlPressed = false;
+	shiftPressed = false;
 	altPressed = false;
 
 	pm_params.resize(3);

@@ -35,8 +35,8 @@ public:
 	RenderManager renderManager;
 
 	// key status
-	bool shiftPressed;
 	bool ctrlPressed;
+	bool shiftPressed;
 	bool altPressed;
 
 	// grammars
