@@ -144,6 +144,8 @@ void MainWindow::onOption() {
 		glWidget->horizontalLeftColor = dlg.getHorizontalLeftColor();
 		glWidget->horizontalRightColor = dlg.getHorizontalRightColor();
 		glWidget->verticalColor = dlg.getVerticalColor();
+		glWidget->silhouetteWidth = dlg.getSilhouetteWidth();
+		glWidget->silhouetteColor = dlg.getSilhouetteColor();
 		if (glWidget->grammar_id != dlg.getGrammarId()) {
 			glWidget->grammar_id = dlg.getGrammarId();
 			glWidget->updateGeometry(glWidget->grammars[glWidget->grammar_id], glWidget->pm_params);

@@ -449,6 +449,11 @@
   <tabstop>lineEditVerticalRed</tabstop>
   <tabstop>lineEditVerticalGreen</tabstop>
   <tabstop>lineEditVerticalBlue</tabstop>
+  <tabstop>lineEditSilhouetteWidth</tabstop>
+  <tabstop>lineEditSilhouetteRed</tabstop>
+  <tabstop>lineEditSilhouetteGreen</tabstop>
+  <tabstop>lineEditSilhouetteBlue</tabstop>
+  <tabstop>lineEditGrammarId</tabstop>
   <tabstop>pushButtonOK</tabstop>
   <tabstop>pushButtonCancel</tabstop>
  </tabstops>
