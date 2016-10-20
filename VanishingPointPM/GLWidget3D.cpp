@@ -13,6 +13,7 @@
 #include "GrammarParser.h"
 #include "Rectangle.h"
 #include "Utils.h"
+#include "CVUtils.h"
 #include <time.h>
 
 GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers)) {
@@ -789,7 +790,8 @@ double GLWidget3D::distanceMap(cv::Mat rendered_image, const cv::Mat& reference_
  * @param pm_params		PM parameter values
  */
 void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>& pm_params) {
-	std::vector<boost::shared_ptr<glutils::Face>> faces;
+	//std::vector<boost::shared_ptr<glutils::Face>> faces;
+	faces.clear();
 	
 	// setup CGA
 	cga::CGA cga;
@@ -805,6 +807,56 @@ void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>&
 	cga.generateGeometry(faces, true);
 	renderManager.removeObjects();
 	renderManager.addFaces(faces, true);
+}
+
+void GLWidget3D::textureMapping() {
+	// create texture folder
+	if (!QDir("textures").exists()) QDir().mkdir("textures");
+
+	// convert image to cv::Mat object
+	cv::Mat imageMat = cv::Mat(image.height(), image.width(), CV_8UC4, const_cast<uchar*>(image.bits()), image.bytesPerLine()).clone();
+	cv::cvtColor(imageMat, imageMat, cv::COLOR_BGRA2BGR);
+
+	// rectify the facade image
+	for (int i = 0; i < faces.size(); ++i) {
+		std::vector<cv::Point2f> pts;
+		std::vector<glm::vec3> pts3d;
+		for (int j = 0; j < faces[i]->vertices.size(); ++j) {
+			if (j == 3 || j == 4) continue;
+
+			pts3d.push_back(faces[i]->vertices[j].position);
+
+			glm::vec2 pp = utils::projectPoint(width(), height(), faces[i]->vertices[j].position, camera.mvpMatrix);
+			pts.push_back(cv::Point2f(pp.x, pp.y));
+		}
+
+		// check if the face is visible
+		if (pts3d.size() < 3) continue;
+		glm::vec3 normal = glm::cross(pts3d[1] - pts3d[0], pts3d[2] - pts3d[1]);
+		normal = glm::vec3(camera.mvMatrix * glm::vec4(normal, 0));
+		glm::vec3 view_dir = glm::vec3(camera.mvMatrix * glm::vec4(pts3d[0], 1));
+		if (glm::dot(normal, view_dir) >= 0) continue;
+			
+		if (pts.size() == 4) {
+			// rectify the facade image
+			cv::Mat transformMat;
+			cv::Mat rectifiedImage = cvutils::rectify_image(imageMat, pts, transformMat, glm::length(pts3d[1] - pts3d[0]) / glm::length(pts3d[2] - pts3d[1]));
+			rectifiedImage = cvutils::adjust_contrast(rectifiedImage);
+
+			time_t now = clock();
+
+			// save the texture image
+			QString name = QString("textures/rectified_%1_%2.png").arg(now).arg(i);
+			cv::imwrite(name.toUtf8().constData(), rectifiedImage);
+
+			faces[i]->texture = name.toUtf8().constData();
+		}
+	}
+
+	renderManager.removeObjects();
+	renderManager.addFaces(faces, true);
+	renderManager.renderingMode = RenderManager::RENDERING_MODE_BASIC;
+	update();
 }
 
 void GLWidget3D::updateStatusBar() {
@@ -1057,7 +1109,6 @@ void GLWidget3D::paintEvent(QPaintEvent *event) {
 	painter.setPen(QPen(QColor(255, 0, 0), 1, Qt::SolidLine));
 	painter.setBrush(QBrush(QColor(255, 0, 0)));
 	painter.drawEllipse((pp.x + 1) * 0.5 * width() - 3, (1 - pp.y) * 0.5 * height() - 3, 7, 7);
-
 	painter.end();
 
 	glEnable(GL_DEPTH_TEST);

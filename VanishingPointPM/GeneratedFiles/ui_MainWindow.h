@@ -44,6 +44,7 @@ public:
     QAction *action3DReconstructionAll;
     QAction *actionClearSilhouette;
     QAction *actionClearBackground;
+    QAction *actionTextureMapping;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuFile;
@@ -96,6 +97,8 @@ public:
         actionClearSilhouette->setObjectName(QStringLiteral("actionClearSilhouette"));
         actionClearBackground = new QAction(MainWindowClass);
         actionClearBackground->setObjectName(QStringLiteral("actionClearBackground"));
+        actionTextureMapping = new QAction(MainWindowClass);
+        actionTextureMapping->setObjectName(QStringLiteral("actionTextureMapping"));
         centralWidget = new QWidget(MainWindowClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         MainWindowClass->setCentralWidget(centralWidget);
@@ -136,10 +139,14 @@ public:
         menuEdit->addAction(actionUndo);
         menuTool->addAction(actionComputeVanishingPoint);
         menuTool->addAction(actionComputeCameraMatrix);
+        menuTool->addSeparator();
+        menuTool->addAction(actionTextureMapping);
+        menuTool->addSeparator();
         menuTool->addAction(action3DReconstruction);
         menuTool->addAction(action3DReconstructionAll);
         menuTool->addSeparator();
         menuTool->addAction(menuPen->menuAction());
+        menuTool->addSeparator();
         menuTool->addAction(actionOption);
         menuPen->addAction(actionPenVanishingLine);
         menuPen->addAction(actionPenSilhouette);
@@ -173,6 +180,7 @@ public:
         action3DReconstructionAll->setText(QApplication::translate("MainWindowClass", "3D Reconstruction for All", 0));
         actionClearSilhouette->setText(QApplication::translate("MainWindowClass", "Clear Silhouette", 0));
         actionClearBackground->setText(QApplication::translate("MainWindowClass", "Clear Background", 0));
+        actionTextureMapping->setText(QApplication::translate("MainWindowClass", "Texture Mapping", 0));
         menuFile->setTitle(QApplication::translate("MainWindowClass", "File", 0));
         menuEdit->setTitle(QApplication::translate("MainWindowClass", "Edit", 0));
         menuTool->setTitle(QApplication::translate("MainWindowClass", "Tool", 0));

@@ -254,6 +254,9 @@
     <ClCompile Include="OffsetOperator.cpp">
       <Filter>Source Files\cga</Filter>
     </ClCompile>
+    <ClCompile Include="CVUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h">
@@ -469,6 +472,9 @@
       <Filter>Source Files\cga</Filter>
     </ClInclude>
     <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CVUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

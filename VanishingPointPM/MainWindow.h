@@ -31,6 +31,7 @@ public slots:
 	void onComputeCameraMatrix();
 	void on3DReconstruction();
 	void on3DReconstructionAll();
+	void onTextureMapping();
 	void onPenChanged();
 	void onOption();
 

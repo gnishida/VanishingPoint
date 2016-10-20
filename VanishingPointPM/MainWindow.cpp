@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionComputeCameraMatrix, SIGNAL(triggered()), this, SLOT(onComputeCameraMatrix()));
 	connect(ui.action3DReconstruction, SIGNAL(triggered()), this, SLOT(on3DReconstruction()));
 	connect(ui.action3DReconstructionAll, SIGNAL(triggered()), this, SLOT(on3DReconstructionAll()));
+	connect(ui.actionTextureMapping, SIGNAL(triggered()), this, SLOT(onTextureMapping()));
 	connect(ui.actionPenVanishingLine, SIGNAL(triggered()), this, SLOT(onPenChanged()));
 	connect(ui.actionPenSilhouette, SIGNAL(triggered()), this, SLOT(onPenChanged()));
 	connect(ui.actionOption, SIGNAL(triggered()), this, SLOT(onOption()));
@@ -118,6 +119,10 @@ void MainWindow::on3DReconstruction() {
 void MainWindow::on3DReconstructionAll() {
 	glWidget->reconstruct3DAll();
 	glWidget->update();
+}
+
+void MainWindow::onTextureMapping() {
+	glWidget->textureMapping();
 }
 
 void MainWindow::onPenChanged() {

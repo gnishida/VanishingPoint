@@ -59,10 +59,14 @@
     </widget>
     <addaction name="actionComputeVanishingPoint"/>
     <addaction name="actionComputeCameraMatrix"/>
+    <addaction name="separator"/>
+    <addaction name="actionTextureMapping"/>
+    <addaction name="separator"/>
     <addaction name="action3DReconstruction"/>
     <addaction name="action3DReconstructionAll"/>
     <addaction name="separator"/>
     <addaction name="menuPen"/>
+    <addaction name="separator"/>
     <addaction name="actionOption"/>
    </widget>
    <addaction name="menuFile"/>
@@ -181,6 +185,11 @@
   <action name="actionClearBackground">
    <property name="text">
     <string>Clear Background</string>
+   </property>
+  </action>
+  <action name="actionTextureMapping">
+   <property name="text">
+    <string>Texture Mapping</string>
    </property>
   </action>
  </widget>

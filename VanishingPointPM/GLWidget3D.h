@@ -43,6 +43,7 @@ public:
 	std::vector<cga::Grammar> grammars;
 	int grammar_id;
 	std::vector<float> pm_params;
+	std::vector<boost::shared_ptr<glutils::Face>> faces;
 
 	// GUI options
 	float opacityOfBackground;
@@ -80,6 +81,7 @@ public:
 	void renderImage(cga::Grammar& grammar, const std::vector<float>& pm_params, cv::Mat& rendered_image);
 	double distanceMap(cv::Mat rendered_image, const cv::Mat& reference_dist_map);
 	void updateGeometry(cga::Grammar& grammar, const std::vector<float>& pm_params);
+	void textureMapping();
 	void updateStatusBar();
 
 	void keyPressEvent(QKeyEvent* e);

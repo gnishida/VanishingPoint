@@ -95,6 +95,10 @@ namespace utils {
 		return genRand(b + 1 - a) + a;
 	}
 
+	double gauss(double u, double sigma) {
+		return 1.0 / 2.0 / M_PI / sigma / sigma * exp(-u * u / 2.0 / sigma / sigma);
+	}
+
 	/**
 	* Computes the intersection between two line segments on the XY plane.
 	* Segments must intersect within their extents for the intersection to be valid. z coordinate is ignored.
