@@ -30,12 +30,14 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 
 	// Grammarを読み込む
 	{
-		grammars.resize(5);
+		grammars.resize(7);
 		cga::parseGrammar("cga/contour_01.xml", grammars[0]);
 		cga::parseGrammar("cga/contour_02.xml", grammars[1]);
 		cga::parseGrammar("cga/contour_03.xml", grammars[2]);
 		cga::parseGrammar("cga/contour_04.xml", grammars[3]);
 		cga::parseGrammar("cga/contour_05.xml", grammars[4]);
+		cga::parseGrammar("cga/contour_06.xml", grammars[5]);
+		cga::parseGrammar("cga/contour_07.xml", grammars[6]);
 	}
 
 	pen_type = PEN_TYPE_VANISHING_LINE;
@@ -932,6 +934,14 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		}
 		update();
 		break;
+	case Qt::Key_6:
+		if (pm_params.size() > 5) {
+			pm_params[5] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+			updateGeometry(grammars[grammar_id], pm_params);
+			updateStatusBar();
+		}
+		update();
+		break;
 	case Qt::Key_Left:
 		camera.pos.x += 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
@@ -971,10 +981,6 @@ void GLWidget3D::keyReleaseEvent(QKeyEvent* e) {
 		break;
 	case Qt::Key_Alt:
 		altPressed = false;
-		break;
-	case Qt::Key_1:
-	case Qt::Key_2:
-	case Qt::Key_3:
 		break;
 	default:
 		break;
