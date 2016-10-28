@@ -66,11 +66,11 @@ QColor OptionDialog::getSilhouetteColor() {
 }
 
 void OptionDialog::setGrammarId(int grammarId) {
-	ui.lineEditGrammarId->setText(QString::number(grammarId));
+	ui.lineEditGrammarId->setText(QString::number(grammarId + 1));
 }
 
 int OptionDialog::getGrammarId() {
-	return ui.lineEditGrammarId->text().toInt();
+	return ui.lineEditGrammarId->text().toInt() - 1;
 }
 
 void OptionDialog::onOK() {
