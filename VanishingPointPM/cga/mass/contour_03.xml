@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <grammar type="building" version="1.0" author="Gen Nishida">
 	<!-- parameters -->
-	<attr name="width" value="10" range="10,40"/>
-	<attr name="depth" value="10" range="10,40"/>
-	<attr name="height" value="10" range="10,40"/>
-	<attr name="corner_cut_length" value="4" range="4,9"/>
+	<attr name="width" value="10" range="15,40"/>
+	<attr name="depth" value="10" range="15,40"/>
+	<attr name="height" value="10" range="8,40"/>
+	<attr name="corner_cut_length" value="4" range="1,10"/>
 	
 	<rule name="Start">
 		<translate mode="rel" coordSystem="world">
@@ -17,7 +17,7 @@
 			<param name="ySize" type="absolute" value="depth"/>
 			<param name="zSize" type="absolute" value="0"/>
 		</size>
-		<cornerCut type="curve" length="corner_cut_length"/>
+		<cornerCut type="straight" length="corner_cut_length"/>
 		<extrude height="height"/>
 		<comp>
 			<param name="side" value="Facade"/>
