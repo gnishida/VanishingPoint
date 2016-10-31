@@ -65,12 +65,12 @@ QColor OptionDialog::getSilhouetteColor() {
 	return QColor(ui.lineEditSilhouetteRed->text().toInt(), ui.lineEditSilhouetteGreen->text().toInt(), ui.lineEditSilhouetteBlue->text().toInt());
 }
 
-void OptionDialog::setGrammarId(int grammarId) {
-	ui.lineEditGrammarId->setText(QString::number(grammarId + 1));
+void OptionDialog::setMassGrammarId(int massGrammarId) {
+	ui.lineEditMassGrammarId->setText(QString::number(massGrammarId + 1));
 }
 
-int OptionDialog::getGrammarId() {
-	return ui.lineEditGrammarId->text().toInt() - 1;
+int OptionDialog::getMassGrammarId() {
+	return ui.lineEditMassGrammarId->text().toInt() - 1;
 }
 
 void OptionDialog::onOK() {

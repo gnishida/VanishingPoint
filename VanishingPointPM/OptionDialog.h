@@ -24,8 +24,8 @@ public:
 	int getSilhouetteWidth();
 	void setSilhouetteColor(const QColor& silhouetteColor);
 	QColor getSilhouetteColor();
-	void setGrammarId(int grammarId);
-	int getGrammarId();
+	void setMassGrammarId(int massGrammarId);
+	int getMassGrammarId();
 
 	public slots:
 	void onOK();

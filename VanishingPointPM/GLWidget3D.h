@@ -22,6 +22,7 @@ class MainWindow;
 class GLWidget3D : public QGLWidget {
 public:
 	static enum { PEN_TYPE_VANISHING_LINE = 0, PEN_TYPE_SILHOUETTE };
+	static enum { GRAMMAR_TYPE_MASS = 0, GRAMMAR_TYPE_FACADE };
 
 public:
 	MainWindow* mainWin;
@@ -40,9 +41,9 @@ public:
 	bool altPressed;
 
 	// grammars
-	std::vector<cga::Grammar> grammars;
-	int grammar_id;
-	std::vector<float> pm_params;
+	std::map<std::string, std::vector<cga::Grammar>> grammars;
+	int mass_grammar_id;
+	std::map<std::string, std::vector<float>> pm_params;
 	std::vector<boost::shared_ptr<glutils::Face>> faces;
 
 	// GUI options
@@ -50,6 +51,7 @@ public:
 	bool image_loaded;
 	QImage image;
 	int pen_type;
+	int grammar_type;
 	std::vector<vp::VanishingLine> lines;
 	glm::dvec2 origin;
 	int lineWidth;
@@ -76,11 +78,12 @@ public:
 	void undo();
 	void computeVanishingPoint();
 	void computeCameraMatrix();
-	void reconstruct3DAll();
-	std::vector<float> reconstruct3D();
-	void renderImage(cga::Grammar& grammar, const std::vector<float>& pm_params, cv::Mat& rendered_image);
+	//void reconstruct3DAll();
+	//std::vector<float> reconstruct3D();
+	//void renderImage(cga::Grammar& grammar, const std::vector<float>& pm_params, cv::Mat& rendered_image);
 	double distanceMap(cv::Mat rendered_image, const cv::Mat& reference_dist_map);
 	void updateGeometry(cga::Grammar& grammar, const std::vector<float>& pm_params);
+	void updateGeometry();
 	void textureMapping();
 	void updateStatusBar();
 

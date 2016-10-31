@@ -45,12 +45,20 @@ public:
     QAction *actionClearSilhouette;
     QAction *actionClearBackground;
     QAction *actionTextureMapping;
+    QAction *actionRenderingLine;
+    QAction *actionRenderingSilhouette;
+    QAction *actionRenderingBasic;
+    QAction *actionGrammarMass;
+    QAction *actionGrammarFacade;
+    QAction *actionRenderingSSAO;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuFile;
     QMenu *menuEdit;
     QMenu *menuTool;
     QMenu *menuPen;
+    QMenu *menuRendering;
+    QMenu *menuGrammar;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
 
@@ -99,6 +107,24 @@ public:
         actionClearBackground->setObjectName(QStringLiteral("actionClearBackground"));
         actionTextureMapping = new QAction(MainWindowClass);
         actionTextureMapping->setObjectName(QStringLiteral("actionTextureMapping"));
+        actionRenderingLine = new QAction(MainWindowClass);
+        actionRenderingLine->setObjectName(QStringLiteral("actionRenderingLine"));
+        actionRenderingLine->setCheckable(true);
+        actionRenderingSilhouette = new QAction(MainWindowClass);
+        actionRenderingSilhouette->setObjectName(QStringLiteral("actionRenderingSilhouette"));
+        actionRenderingSilhouette->setCheckable(true);
+        actionRenderingBasic = new QAction(MainWindowClass);
+        actionRenderingBasic->setObjectName(QStringLiteral("actionRenderingBasic"));
+        actionRenderingBasic->setCheckable(true);
+        actionGrammarMass = new QAction(MainWindowClass);
+        actionGrammarMass->setObjectName(QStringLiteral("actionGrammarMass"));
+        actionGrammarMass->setCheckable(true);
+        actionGrammarFacade = new QAction(MainWindowClass);
+        actionGrammarFacade->setObjectName(QStringLiteral("actionGrammarFacade"));
+        actionGrammarFacade->setCheckable(true);
+        actionRenderingSSAO = new QAction(MainWindowClass);
+        actionRenderingSSAO->setObjectName(QStringLiteral("actionRenderingSSAO"));
+        actionRenderingSSAO->setCheckable(true);
         centralWidget = new QWidget(MainWindowClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         MainWindowClass->setCentralWidget(centralWidget);
@@ -113,6 +139,10 @@ public:
         menuTool->setObjectName(QStringLiteral("menuTool"));
         menuPen = new QMenu(menuTool);
         menuPen->setObjectName(QStringLiteral("menuPen"));
+        menuRendering = new QMenu(menuTool);
+        menuRendering->setObjectName(QStringLiteral("menuRendering"));
+        menuGrammar = new QMenu(menuTool);
+        menuGrammar->setObjectName(QStringLiteral("menuGrammar"));
         MainWindowClass->setMenuBar(menuBar);
         mainToolBar = new QToolBar(MainWindowClass);
         mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
@@ -140,16 +170,24 @@ public:
         menuTool->addAction(actionComputeVanishingPoint);
         menuTool->addAction(actionComputeCameraMatrix);
         menuTool->addSeparator();
+        menuTool->addAction(menuRendering->menuAction());
         menuTool->addAction(actionTextureMapping);
         menuTool->addSeparator();
         menuTool->addAction(action3DReconstruction);
         menuTool->addAction(action3DReconstructionAll);
         menuTool->addSeparator();
         menuTool->addAction(menuPen->menuAction());
+        menuTool->addAction(menuGrammar->menuAction());
         menuTool->addSeparator();
         menuTool->addAction(actionOption);
         menuPen->addAction(actionPenVanishingLine);
         menuPen->addAction(actionPenSilhouette);
+        menuRendering->addAction(actionRenderingLine);
+        menuRendering->addAction(actionRenderingSilhouette);
+        menuRendering->addAction(actionRenderingBasic);
+        menuRendering->addAction(actionRenderingSSAO);
+        menuGrammar->addAction(actionGrammarMass);
+        menuGrammar->addAction(actionGrammarFacade);
 
         retranslateUi(MainWindowClass);
 
@@ -181,10 +219,18 @@ public:
         actionClearSilhouette->setText(QApplication::translate("MainWindowClass", "Clear Silhouette", 0));
         actionClearBackground->setText(QApplication::translate("MainWindowClass", "Clear Background", 0));
         actionTextureMapping->setText(QApplication::translate("MainWindowClass", "Texture Mapping", 0));
+        actionRenderingLine->setText(QApplication::translate("MainWindowClass", "Line", 0));
+        actionRenderingSilhouette->setText(QApplication::translate("MainWindowClass", "Silhouette", 0));
+        actionRenderingBasic->setText(QApplication::translate("MainWindowClass", "Basic", 0));
+        actionGrammarMass->setText(QApplication::translate("MainWindowClass", "Building Mass", 0));
+        actionGrammarFacade->setText(QApplication::translate("MainWindowClass", "Facade", 0));
+        actionRenderingSSAO->setText(QApplication::translate("MainWindowClass", "SSAO", 0));
         menuFile->setTitle(QApplication::translate("MainWindowClass", "File", 0));
         menuEdit->setTitle(QApplication::translate("MainWindowClass", "Edit", 0));
         menuTool->setTitle(QApplication::translate("MainWindowClass", "Tool", 0));
         menuPen->setTitle(QApplication::translate("MainWindowClass", "Pen", 0));
+        menuRendering->setTitle(QApplication::translate("MainWindowClass", "Rendering", 0));
+        menuGrammar->setTitle(QApplication::translate("MainWindowClass", "Grammar", 0));
     } // retranslateUi
 
 };

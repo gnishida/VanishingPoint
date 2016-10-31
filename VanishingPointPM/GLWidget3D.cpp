@@ -22,22 +22,40 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 	shiftPressed = false;
 	altPressed = false;
 
-	pm_params.resize(3);
-	pm_params[0] = 0.5;
-	pm_params[1] = 0.5;
-	pm_params[2] = 0.5;
-	grammar_id = 0;
+	grammar_type = GRAMMAR_TYPE_MASS;
+	mass_grammar_id = 0;
+	pm_params["mass"].resize(3);
+	pm_params["mass"][0] = 0.5;
+	pm_params["mass"][1] = 0.5;
+	pm_params["mass"][2] = 0.5;
+	pm_params["facade"].resize(4);
+	pm_params["facade"][0] = 0.5;
+	pm_params["facade"][1] = 0.5;
+	pm_params["facade"][2] = 0.5;
+	pm_params["facade"][3] = 0.5;
+	pm_params["window"].resize(3);
+	pm_params["window"][0] = 0.5;
+	pm_params["window"][1] = 0.5;
+	pm_params["window"][2] = 0.5;
 
 	// Grammarを読み込む
 	{
-		grammars.resize(7);
-		cga::parseGrammar("cga/contour_01.xml", grammars[0]);
-		cga::parseGrammar("cga/contour_02.xml", grammars[1]);
-		cga::parseGrammar("cga/contour_03.xml", grammars[2]);
-		cga::parseGrammar("cga/contour_04.xml", grammars[3]);
-		cga::parseGrammar("cga/contour_05.xml", grammars[4]);
-		cga::parseGrammar("cga/contour_06.xml", grammars[5]);
-		cga::parseGrammar("cga/contour_07.xml", grammars[6]);
+		grammars["mass"].resize(9);
+		cga::parseGrammar("cga/mass/contour_01.xml", grammars["mass"][0]);
+		cga::parseGrammar("cga/mass/contour_02.xml", grammars["mass"][1]);
+		cga::parseGrammar("cga/mass/contour_03.xml", grammars["mass"][2]);
+		cga::parseGrammar("cga/mass/contour_04.xml", grammars["mass"][3]);
+		cga::parseGrammar("cga/mass/contour_05.xml", grammars["mass"][4]);
+		cga::parseGrammar("cga/mass/contour_06.xml", grammars["mass"][5]);
+		cga::parseGrammar("cga/mass/contour_07.xml", grammars["mass"][6]);
+		cga::parseGrammar("cga/mass/contour_08.xml", grammars["mass"][7]);
+		cga::parseGrammar("cga/mass/contour_09.xml", grammars["mass"][8]);
+
+		grammars["facade"].resize(1);
+		cga::parseGrammar("cga/facade/facade_01.xml", grammars["facade"][0]);
+
+		grammars["window"].resize(1);
+		cga::parseGrammar("cga/window/window_01.xml", grammars["window"][0]);
 	}
 
 	pen_type = PEN_TYPE_VANISHING_LINE;
@@ -527,6 +545,7 @@ void GLWidget3D::computeCameraMatrix() {
 	update();
 }
 
+#if 0
 void GLWidget3D::reconstruct3DAll() {
 	QDir data_dir("data/");
 	QStringList files = data_dir.entryList(QDir::NoDotAndDotDot | QDir::Files);// , QDir::DirsFirst);//(QDir::Filter::Files,QDir::SortFlag::NoSort)
@@ -568,7 +587,9 @@ void GLWidget3D::reconstruct3DAll() {
 		}
 	}
 }
+#endif
 
+#if 0
 std::vector<float> GLWidget3D::reconstruct3D() {
 	time_t start = clock();
 
@@ -617,7 +638,7 @@ std::vector<float> GLWidget3D::reconstruct3D() {
 	// do random walk to find good initial PM parameter values
 	renderManager.renderingMode = RenderManager::RENDERING_MODE_CONTOUR;
 
-	std::vector<float> best_params(grammars[grammar_id].attrs.size() + 2);
+	std::vector<float> best_params(grammars["mass"][grammar_id].attrs.size() + 2);
 	double diff_min = std::numeric_limits<double>::max();
 	printf("find good values by random sampling: ");
 	for (int iter = 0; iter < 500; ++iter) {
@@ -640,7 +661,7 @@ std::vector<float> GLWidget3D::reconstruct3D() {
 		camera.updatePMatrix(width(), height());
 		
 		cv::Mat rendered_image;
-		renderImage(grammars[grammar_id], std::vector<float>(cur_params.begin() + 2, cur_params.end()), rendered_image);
+		renderImage(grammars["mass"][grammar_id], std::vector<float>(cur_params.begin() + 2, cur_params.end()), rendered_image);
 
 		// compute the difference
 		double diff = distanceMap(rendered_image, silhouette_dist_map);
@@ -662,7 +683,7 @@ std::vector<float> GLWidget3D::reconstruct3D() {
 					camera.updatePMatrix(width(), height());
 				}
 				cv::Mat rendered_image1;
-				renderImage(grammars[grammar_id], std::vector<float>(next_params1.begin() + 2, next_params1.end()), rendered_image1);
+				renderImage(grammars["mass"][grammar_id], std::vector<float>(next_params1.begin() + 2, next_params1.end()), rendered_image1);
 				double diff1 = distanceMap(rendered_image1, silhouette_dist_map);
 
 				// option 2
@@ -678,7 +699,7 @@ std::vector<float> GLWidget3D::reconstruct3D() {
 					camera.updatePMatrix(width(), height());
 				}
 				cv::Mat rendered_image2;
-				renderImage(grammars[grammar_id], std::vector<float>(next_params2.begin() + 2, next_params2.end()), rendered_image2);
+				renderImage(grammars["mass"][grammar_id], std::vector<float>(next_params2.begin() + 2, next_params2.end()), rendered_image2);
 				double diff2 = distanceMap(rendered_image2, silhouette_dist_map);
 
 				if (diff1 < diff2 && diff1 < diff) {
@@ -717,7 +738,7 @@ std::vector<float> GLWidget3D::reconstruct3D() {
 		pm_params.push_back(best_params[k]);
 	}
 
-	updateGeometry(grammars[grammar_id], pm_params);
+	updateGeometry(grammars["mass"][grammar_id], pm_params);
 
 	updateStatusBar();
 	update();
@@ -735,15 +756,16 @@ std::vector<float> GLWidget3D::reconstruct3D() {
 	ret.push_back(camera.pos.y);
 	ret.push_back(camera.pos.z);
 	std::vector<std::string> keys;
-	for (auto it = grammars[grammar_id].attrs.begin(); it != grammars[grammar_id].attrs.end(); ++it) {
+	for (auto it = grammars["mass"][grammar_id].attrs.begin(); it != grammars["mass"][grammar_id].attrs.end(); ++it) {
 		keys.push_back(it->first);
 	}
 	for (int k = 0; k < pm_params.size(); ++k) {
-		ret.push_back(pm_params[k] * (grammars[grammar_id].attrs[keys[k]].range_end - grammars[grammar_id].attrs[keys[k]].range_start) + grammars[grammar_id].attrs[keys[k]].range_start);
+		ret.push_back(pm_params[k] * (grammars["mass"][grammar_id].attrs[keys[k]].range_end - grammars["mass"][grammar_id].attrs[keys[k]].range_start) + grammars["mass"][grammar_id].attrs[keys[k]].range_start);
 	}
 
 	return ret;
 }
+#endif
 
 /**
  * Generate an image using the selected grammar and the PM parameter values.
@@ -752,6 +774,7 @@ std::vector<float> GLWidget3D::reconstruct3D() {
  * @param pm_params			PM parameter values
  * @param rendered_image	rendered image [OUT]
  */
+/*
 void GLWidget3D::renderImage(cga::Grammar& grammar, const std::vector<float>& pm_params, cv::Mat& rendered_image) {
 	updateGeometry(grammar, pm_params);
 
@@ -760,6 +783,7 @@ void GLWidget3D::renderImage(cga::Grammar& grammar, const std::vector<float>& pm
 	rendered_image = cv::Mat(img.height(), img.width(), CV_8UC4, img.bits(), img.bytesPerLine()).clone();
 	cv::cvtColor(rendered_image, rendered_image, cv::COLOR_BGRA2BGR);
 }
+*/
 
 /**
  * Compute the distance between the rendered image and the target.
@@ -798,7 +822,7 @@ void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>&
 	// setup CGA
 	cga::CGA cga;
 	cga.modelMat = glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0));
-	cga.setParamValues(grammar, pm_params);
+	cga::setParamValues(grammar, pm_params);
 
 	// set axiom
 	boost::shared_ptr<cga::Shape> start = boost::shared_ptr<cga::Shape>(new cga::Rectangle("Start", "", glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), glm::mat4(), 0, 0, glm::vec3(1, 1, 1)));
@@ -806,6 +830,40 @@ void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>&
 
 	// generate 3d model
 	cga.derive(grammar, true);
+	cga.generateGeometry(faces, true);
+	renderManager.removeObjects();
+	renderManager.addFaces(faces, true);
+
+	renderManager.updateShadowMap(this, light_dir, light_mvpMatrix);
+}
+
+void GLWidget3D::updateGeometry() {
+	faces.clear();
+
+	// set param values
+	cga::setParamValues(grammars["mass"][mass_grammar_id], pm_params["mass"]);
+	if (grammar_type == GRAMMAR_TYPE_FACADE) {
+		cga::setParamValues(grammars["facade"][0], pm_params["facade"]);
+		cga::setParamValues(grammars["window"][0], pm_params["window"]);
+	}
+
+	// setup CGA
+	cga::CGA cga;
+	cga.modelMat = glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0));
+
+	// set axiom
+	boost::shared_ptr<cga::Shape> start = boost::shared_ptr<cga::Shape>(new cga::Rectangle("Start", "", glm::translate(glm::rotate(glm::mat4(), -(float)vp::M_PI * 0.5f, glm::vec3(1, 0, 0)), glm::vec3(0, 0, 0)), glm::mat4(), 0, 0, glm::vec3(1, 1, 1)));
+	cga.stack.push_back(start);
+
+	std::vector<cga::Grammar*> grammar_list;
+	grammar_list.push_back(&grammars["mass"][mass_grammar_id]);
+	if (grammar_type == GRAMMAR_TYPE_FACADE) {
+		grammar_list.push_back(&grammars["facade"][0]);
+		grammar_list.push_back(&grammars["window"][0]);
+	}
+
+	// generate 3d model
+	cga.derive(grammar_list, true);
 	cga.generateGeometry(faces, true);
 	renderManager.removeObjects();
 	renderManager.addFaces(faces, true);
@@ -863,9 +921,17 @@ void GLWidget3D::textureMapping() {
 
 void GLWidget3D::updateStatusBar() {
 	QString format("rot=(%1, %2, %3), pos=(%4, %5, %6), fov=%7, O=(%8, %9), PM=(");
-	for (int i = 0; i < pm_params.size(); ++i) {
-		if (i > 0) format += ", ";
-		format += "%" + QString::number(10 + i);
+	if (grammar_type == GRAMMAR_TYPE_MASS) {
+		for (int i = 0; i < pm_params["mass"].size(); ++i) {
+			if (i > 0) format += ", ";
+			format += "%" + QString::number(10 + i);
+		}
+	}
+	else if (grammar_type == GRAMMAR_TYPE_FACADE) {
+		for (int i = 0; i < pm_params["facade"].size(); ++i) {
+			if (i > 0) format += ", ";
+			format += "%" + QString::number(10 + i);
+		}
 	}
 	format += ")";
 
@@ -873,8 +939,15 @@ void GLWidget3D::updateStatusBar() {
 
 	// add PM parameter values (instead of normalized ones!)
 	int k = 0;
-	for (auto it = grammars[grammar_id].attrs.begin(); it != grammars[grammar_id].attrs.end(); ++it, ++k) {
-		msg = msg.arg(pm_params[k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
+	if (grammar_type == GRAMMAR_TYPE_MASS) {
+		for (auto it = grammars["mass"][mass_grammar_id].attrs.begin(); it != grammars["mass"][mass_grammar_id].attrs.end(); ++it, ++k) {
+			msg = msg.arg(pm_params["mass"][k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
+		}
+	}
+	else if (grammar_type == GRAMMAR_TYPE_FACADE) {
+		for (auto it = grammars["facade"][0].attrs.begin(); it != grammars["facade"][mass_grammar_id].attrs.end(); ++it, ++k) {
+			msg = msg.arg(pm_params["facade"][k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
+		}
 	}
 
 	mainWin->statusBar()->showMessage(msg);
@@ -895,51 +968,69 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		altPressed = true;
 		break;
 	case Qt::Key_1:
-		if (pm_params.size() > 0) {
-			pm_params[0] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
-			updateGeometry(grammars[grammar_id], pm_params);
-			updateStatusBar();
-			update();
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 0) {
+			pm_params["mass"][0] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 0) {
+			pm_params["facade"][0] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateStatusBar();
+		update();
 		break;
 	case Qt::Key_2:
-		if (pm_params.size() > 1) {
-			pm_params[1] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
-			updateGeometry(grammars[grammar_id], pm_params);
-			updateStatusBar();
-			update();
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 1) {
+			pm_params["mass"][1] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 1) {
+			pm_params["facade"][1] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateStatusBar();
+		update();
 		break;
 	case Qt::Key_3:
-		if (pm_params.size() > 2) {
-			pm_params[2] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
-			updateGeometry(grammars[grammar_id], pm_params);
-			updateStatusBar();
-			update();
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 2) {
+			pm_params["mass"][2] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 2) {
+			pm_params["facade"][2] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateStatusBar();
+		update();
 		break;
 	case Qt::Key_4:
-		if (pm_params.size() > 3) {
-			pm_params[3] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
-			updateGeometry(grammars[grammar_id], pm_params);
-			updateStatusBar();
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 3) {
+			pm_params["mass"][3] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 3) {
+			pm_params["facade"][3] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_5:
-		if (pm_params.size() > 4) {
-			pm_params[4] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
-			updateGeometry(grammars[grammar_id], pm_params);
-			updateStatusBar();
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 4) {
+			pm_params["mass"][4] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 4) {
+			pm_params["facade"][4] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_6:
-		if (pm_params.size() > 5) {
-			pm_params[5] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
-			updateGeometry(grammars[grammar_id], pm_params);
-			updateStatusBar();
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 5) {
+			pm_params["mass"][5] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 5) {
+			pm_params["facade"][5] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateStatusBar();
 		update();
 		break;
 	case Qt::Key_Left:
@@ -1037,7 +1128,7 @@ void GLWidget3D::initializeGL() {
 	camera.changeFov(0, 1, width(), height());
 
 
-	updateGeometry(grammars[grammar_id], pm_params);
+	updateGeometry();// grammars["mass"][grammar_id], pm_params);
 	updateStatusBar();
 }
 

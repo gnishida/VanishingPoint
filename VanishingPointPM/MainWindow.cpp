@@ -7,11 +7,22 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 
-	QActionGroup* group = new QActionGroup(this);
-	group->addAction(ui.actionPenVanishingLine);
-	group->addAction(ui.actionPenSilhouette);
+	QActionGroup* groupRendering = new QActionGroup(this);
+	groupRendering->addAction(ui.actionRenderingLine);
+	groupRendering->addAction(ui.actionRenderingSilhouette);
+	groupRendering->addAction(ui.actionRenderingBasic);
+	groupRendering->addAction(ui.actionRenderingSSAO);
+	ui.actionRenderingLine->setChecked(true);
 
+	QActionGroup* groupPen = new QActionGroup(this);
+	groupPen->addAction(ui.actionPenVanishingLine);
+	groupPen->addAction(ui.actionPenSilhouette);
 	ui.actionPenVanishingLine->setChecked(true);
+
+	QActionGroup* groupGramar = new QActionGroup(this);
+	groupGramar->addAction(ui.actionGrammarMass);
+	groupGramar->addAction(ui.actionGrammarFacade);
+	ui.actionGrammarMass->setChecked(true);
 
 	connect(ui.actionClearBackground, SIGNAL(triggered()), this, SLOT(onClearBackground()));
 	connect(ui.actionOpenImage, SIGNAL(triggered()), this, SLOT(onOpenImage()));
@@ -27,9 +38,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionComputeCameraMatrix, SIGNAL(triggered()), this, SLOT(onComputeCameraMatrix()));
 	connect(ui.action3DReconstruction, SIGNAL(triggered()), this, SLOT(on3DReconstruction()));
 	connect(ui.action3DReconstructionAll, SIGNAL(triggered()), this, SLOT(on3DReconstructionAll()));
+	connect(ui.actionRenderingLine, SIGNAL(triggered()), this, SLOT(onRenderingChanged()));
+	connect(ui.actionRenderingSilhouette, SIGNAL(triggered()), this, SLOT(onRenderingChanged()));
+	connect(ui.actionRenderingBasic, SIGNAL(triggered()), this, SLOT(onRenderingChanged()));
+	connect(ui.actionRenderingSSAO, SIGNAL(triggered()), this, SLOT(onRenderingChanged()));
 	connect(ui.actionTextureMapping, SIGNAL(triggered()), this, SLOT(onTextureMapping()));
 	connect(ui.actionPenVanishingLine, SIGNAL(triggered()), this, SLOT(onPenChanged()));
 	connect(ui.actionPenSilhouette, SIGNAL(triggered()), this, SLOT(onPenChanged()));
+	connect(ui.actionGrammarMass, SIGNAL(triggered()), this, SLOT(onGrammarChanged()));
+	connect(ui.actionGrammarFacade, SIGNAL(triggered()), this, SLOT(onGrammarChanged()));
 	connect(ui.actionOption, SIGNAL(triggered()), this, SLOT(onOption()));
 
 	glWidget = new GLWidget3D(this);
@@ -107,17 +124,35 @@ void MainWindow::onComputeCameraMatrix() {
 }
 
 void MainWindow::on3DReconstruction() {
-	std::vector<float> params = glWidget->reconstruct3D();
+	/*std::vector<float> params = glWidget->reconstruct3D();
 	for (int k = 0; k < params.size(); ++k) {
 		if (k > 0) std::cout << ", ";
 		std::cout << params[k];
 	}
 	std::cout << std::endl;
+	*/
 	glWidget->update();
 }
 
 void MainWindow::on3DReconstructionAll() {
-	glWidget->reconstruct3DAll();
+	//glWidget->reconstruct3DAll();
+	glWidget->update();
+}
+
+void MainWindow::onRenderingChanged() {
+	if (ui.actionRenderingLine->isChecked()) {
+		glWidget->renderManager.renderingMode = RenderManager::RENDERING_MODE_LINE;
+	}
+	else if (ui.actionRenderingSilhouette->isChecked()) {
+		glWidget->renderManager.renderingMode = RenderManager::RENDERING_MODE_CONTOUR;
+	}
+	else if (ui.actionRenderingBasic->isChecked()) {
+		glWidget->renderManager.renderingMode = RenderManager::RENDERING_MODE_BASIC;
+	}
+	else if (ui.actionRenderingSSAO->isChecked()) {
+		glWidget->renderManager.renderingMode = RenderManager::RENDERING_MODE_SSAO;
+	}
+	glWidget->updateGeometry();
 	glWidget->update();
 }
 
@@ -134,6 +169,17 @@ void MainWindow::onPenChanged() {
 	}
 }
 
+void MainWindow::onGrammarChanged() {
+	if (ui.actionGrammarMass->isChecked()) {
+		glWidget->grammar_type = GLWidget3D::GRAMMAR_TYPE_MASS;
+	}
+	else if (ui.actionGrammarFacade->isChecked()) {
+		glWidget->grammar_type = GLWidget3D::GRAMMAR_TYPE_FACADE;
+	}
+	glWidget->updateGeometry();
+	glWidget->update();
+}
+
 void MainWindow::onOption() {
 	OptionDialog dlg;
 	dlg.setContourLineWidth(glWidget->lineWidth);
@@ -142,7 +188,7 @@ void MainWindow::onOption() {
 	dlg.setVerticalColor(glWidget->verticalColor);
 	dlg.setSilhouetteWidth(glWidget->silhouetteWidth);
 	dlg.setSilhouetteColor(glWidget->silhouetteColor);
-	dlg.setGrammarId(glWidget->grammar_id);
+	dlg.setMassGrammarId(glWidget->mass_grammar_id);
 
 	if (dlg.exec()) {
 		glWidget->lineWidth = dlg.getContourLineWidth();
@@ -151,10 +197,10 @@ void MainWindow::onOption() {
 		glWidget->verticalColor = dlg.getVerticalColor();
 		glWidget->silhouetteWidth = dlg.getSilhouetteWidth();
 		glWidget->silhouetteColor = dlg.getSilhouetteColor();
-		if (glWidget->grammar_id != dlg.getGrammarId()) {
-			glWidget->grammar_id = dlg.getGrammarId();
-			glWidget->pm_params.resize(glWidget->grammars[glWidget->grammar_id].attrs.size());
-			glWidget->updateGeometry(glWidget->grammars[glWidget->grammar_id], glWidget->pm_params);
+		if (glWidget->mass_grammar_id != dlg.getMassGrammarId()) {
+			glWidget->mass_grammar_id = dlg.getMassGrammarId();
+			glWidget->pm_params["mass"].resize(glWidget->grammars["mass"][glWidget->mass_grammar_id].attrs.size());
+			glWidget->updateGeometry();// glWidget->grammars["mass"][glWidget->grammar_id], glWidget->pm_params);
 		}
 	}
 }

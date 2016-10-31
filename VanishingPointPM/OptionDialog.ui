@@ -318,10 +318,10 @@
     </rect>
    </property>
    <property name="text">
-    <string>Grammar id:</string>
+    <string>Mass grammar id:</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="lineEditGrammarId">
+  <widget class="QLineEdit" name="lineEditMassGrammarId">
    <property name="geometry">
     <rect>
      <x>160</x>
@@ -453,7 +453,7 @@
   <tabstop>lineEditSilhouetteRed</tabstop>
   <tabstop>lineEditSilhouetteGreen</tabstop>
   <tabstop>lineEditSilhouetteBlue</tabstop>
-  <tabstop>lineEditGrammarId</tabstop>
+  <tabstop>lineEditMassGrammarId</tabstop>
   <tabstop>pushButtonOK</tabstop>
   <tabstop>pushButtonCancel</tabstop>
  </tabstops>

@@ -57,15 +57,33 @@
      <addaction name="actionPenVanishingLine"/>
      <addaction name="actionPenSilhouette"/>
     </widget>
+    <widget class="QMenu" name="menuRendering">
+     <property name="title">
+      <string>Rendering</string>
+     </property>
+     <addaction name="actionRenderingLine"/>
+     <addaction name="actionRenderingSilhouette"/>
+     <addaction name="actionRenderingBasic"/>
+     <addaction name="actionRenderingSSAO"/>
+    </widget>
+    <widget class="QMenu" name="menuGrammar">
+     <property name="title">
+      <string>Grammar</string>
+     </property>
+     <addaction name="actionGrammarMass"/>
+     <addaction name="actionGrammarFacade"/>
+    </widget>
     <addaction name="actionComputeVanishingPoint"/>
     <addaction name="actionComputeCameraMatrix"/>
     <addaction name="separator"/>
+    <addaction name="menuRendering"/>
     <addaction name="actionTextureMapping"/>
     <addaction name="separator"/>
     <addaction name="action3DReconstruction"/>
     <addaction name="action3DReconstructionAll"/>
     <addaction name="separator"/>
     <addaction name="menuPen"/>
+    <addaction name="menuGrammar"/>
     <addaction name="separator"/>
     <addaction name="actionOption"/>
    </widget>
@@ -190,6 +208,54 @@
   <action name="actionTextureMapping">
    <property name="text">
     <string>Texture Mapping</string>
+   </property>
+  </action>
+  <action name="actionRenderingLine">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Line</string>
+   </property>
+  </action>
+  <action name="actionRenderingSilhouette">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Silhouette</string>
+   </property>
+  </action>
+  <action name="actionRenderingBasic">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Basic</string>
+   </property>
+  </action>
+  <action name="actionGrammarMass">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Building Mass</string>
+   </property>
+  </action>
+  <action name="actionGrammarFacade">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Facade</string>
+   </property>
+  </action>
+  <action name="actionRenderingSSAO">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>SSAO</string>
    </property>
   </action>
  </widget>

@@ -50,7 +50,7 @@ public:
     QPushButton *pushButtonOK;
     QPushButton *pushButtonCancel;
     QLabel *label_14;
-    QLineEdit *lineEditGrammarId;
+    QLineEdit *lineEditMassGrammarId;
     QLabel *label_15;
     QLabel *label_16;
     QLabel *label_17;
@@ -144,9 +144,9 @@ public:
         label_14 = new QLabel(OptionDialog);
         label_14->setObjectName(QStringLiteral("label_14"));
         label_14->setGeometry(QRect(20, 200, 121, 16));
-        lineEditGrammarId = new QLineEdit(OptionDialog);
-        lineEditGrammarId->setObjectName(QStringLiteral("lineEditGrammarId"));
-        lineEditGrammarId->setGeometry(QRect(160, 200, 71, 20));
+        lineEditMassGrammarId = new QLineEdit(OptionDialog);
+        lineEditMassGrammarId->setObjectName(QStringLiteral("lineEditMassGrammarId"));
+        lineEditMassGrammarId->setGeometry(QRect(160, 200, 71, 20));
         label_15 = new QLabel(OptionDialog);
         label_15->setObjectName(QStringLiteral("label_15"));
         label_15->setGeometry(QRect(210, 170, 16, 16));
@@ -187,8 +187,8 @@ public:
         QWidget::setTabOrder(lineEditSilhouetteWidth, lineEditSilhouetteRed);
         QWidget::setTabOrder(lineEditSilhouetteRed, lineEditSilhouetteGreen);
         QWidget::setTabOrder(lineEditSilhouetteGreen, lineEditSilhouetteBlue);
-        QWidget::setTabOrder(lineEditSilhouetteBlue, lineEditGrammarId);
-        QWidget::setTabOrder(lineEditGrammarId, pushButtonOK);
+        QWidget::setTabOrder(lineEditSilhouetteBlue, lineEditMassGrammarId);
+        QWidget::setTabOrder(lineEditMassGrammarId, pushButtonOK);
         QWidget::setTabOrder(pushButtonOK, pushButtonCancel);
 
         retranslateUi(OptionDialog);
@@ -214,7 +214,7 @@ public:
         label_13->setText(QApplication::translate("OptionDialog", "B", 0));
         pushButtonOK->setText(QApplication::translate("OptionDialog", "OK", 0));
         pushButtonCancel->setText(QApplication::translate("OptionDialog", "Cancel", 0));
-        label_14->setText(QApplication::translate("OptionDialog", "Grammar id:", 0));
+        label_14->setText(QApplication::translate("OptionDialog", "Mass grammar id:", 0));
         label_15->setText(QApplication::translate("OptionDialog", "G", 0));
         label_16->setText(QApplication::translate("OptionDialog", "B", 0));
         label_17->setText(QApplication::translate("OptionDialog", "R", 0));
