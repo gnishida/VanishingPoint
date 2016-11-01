@@ -815,10 +815,7 @@ double GLWidget3D::distanceMap(cv::Mat rendered_image, const cv::Mat& reference_
  * @param grammar		grammar
  * @param pm_params		PM parameter values
  */
-void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>& pm_params) {
-	//std::vector<boost::shared_ptr<glutils::Face>> faces;
-	faces.clear();
-	
+void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>& pm_params) {	
 	// set param values
 	cga::setParamValues(grammar, pm_params);
 
@@ -831,6 +828,8 @@ void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>&
 	cga.stack.push_back(start);
 
 	// generate 3d model
+	//std::vector<boost::shared_ptr<glutils::Face>> faces;
+	faces.clear();
 	cga.derive(grammar, true);
 	cga.generateGeometry(faces, true);
 	renderManager.removeObjects();
@@ -840,8 +839,6 @@ void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>&
 }
 
 void GLWidget3D::updateGeometry() {
-	faces.clear();
-
 	// set param values
 	cga::setParamValues(grammars["mass"][grammar_ids["mass"]], pm_params["mass"]);
 	if (grammar_type == GRAMMAR_TYPE_FACADE) {
@@ -865,6 +862,7 @@ void GLWidget3D::updateGeometry() {
 	}
 
 	// generate 3d model
+	faces.clear();
 	cga.derive(grammar_list, true);
 	cga.generateGeometry(faces, true);
 	renderManager.removeObjects();
