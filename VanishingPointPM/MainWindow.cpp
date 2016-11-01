@@ -188,7 +188,7 @@ void MainWindow::onOption() {
 	dlg.setVerticalColor(glWidget->verticalColor);
 	dlg.setSilhouetteWidth(glWidget->silhouetteWidth);
 	dlg.setSilhouetteColor(glWidget->silhouetteColor);
-	dlg.setMassGrammarId(glWidget->mass_grammar_id);
+	dlg.setMassGrammarId(glWidget->grammar_ids["mass"]);
 
 	if (dlg.exec()) {
 		glWidget->lineWidth = dlg.getContourLineWidth();
@@ -197,10 +197,10 @@ void MainWindow::onOption() {
 		glWidget->verticalColor = dlg.getVerticalColor();
 		glWidget->silhouetteWidth = dlg.getSilhouetteWidth();
 		glWidget->silhouetteColor = dlg.getSilhouetteColor();
-		if (glWidget->mass_grammar_id != dlg.getMassGrammarId()) {
-			glWidget->mass_grammar_id = dlg.getMassGrammarId();
-			glWidget->pm_params["mass"].resize(glWidget->grammars["mass"][glWidget->mass_grammar_id].attrs.size());
-			glWidget->updateGeometry();// glWidget->grammars["mass"][glWidget->grammar_id], glWidget->pm_params);
+		if (glWidget->grammar_ids["mass"] != dlg.getMassGrammarId()) {
+			glWidget->grammar_ids["mass"] = dlg.getMassGrammarId();
+			glWidget->pm_params["mass"].resize(glWidget->grammars["mass"][glWidget->grammar_ids["mass"]].attrs.size());
+			glWidget->updateGeometry();
 		}
 	}
 }

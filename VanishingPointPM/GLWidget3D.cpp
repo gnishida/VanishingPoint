@@ -23,7 +23,7 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 	altPressed = false;
 
 	grammar_type = GRAMMAR_TYPE_MASS;
-	mass_grammar_id = 0;
+	grammar_ids["mass"] = 0;
 	pm_params["mass"].resize(3);
 	pm_params["mass"][0] = 0.5;
 	pm_params["mass"][1] = 0.5;
@@ -843,7 +843,7 @@ void GLWidget3D::updateGeometry() {
 	faces.clear();
 
 	// set param values
-	cga::setParamValues(grammars["mass"][mass_grammar_id], pm_params["mass"]);
+	cga::setParamValues(grammars["mass"][grammar_ids["mass"]], pm_params["mass"]);
 	if (grammar_type == GRAMMAR_TYPE_FACADE) {
 		cga::setParamValues(grammars["facade"][0], pm_params["facade"]);
 		cga::setParamValues(grammars["window"][0], pm_params["window"]);
@@ -858,7 +858,7 @@ void GLWidget3D::updateGeometry() {
 	cga.stack.push_back(start);
 
 	std::vector<cga::Grammar*> grammar_list;
-	grammar_list.push_back(&grammars["mass"][mass_grammar_id]);
+	grammar_list.push_back(&grammars["mass"][grammar_ids["mass"]]);
 	if (grammar_type == GRAMMAR_TYPE_FACADE) {
 		grammar_list.push_back(&grammars["facade"][0]);
 		grammar_list.push_back(&grammars["window"][0]);
@@ -942,12 +942,12 @@ void GLWidget3D::updateStatusBar() {
 	// add PM parameter values (instead of normalized ones!)
 	int k = 0;
 	if (grammar_type == GRAMMAR_TYPE_MASS) {
-		for (auto it = grammars["mass"][mass_grammar_id].attrs.begin(); it != grammars["mass"][mass_grammar_id].attrs.end(); ++it, ++k) {
+		for (auto it = grammars["mass"][grammar_ids["mass"]].attrs.begin(); it != grammars["mass"][grammar_ids["mass"]].attrs.end(); ++it, ++k) {
 			msg = msg.arg(pm_params["mass"][k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
 		}
 	}
 	else if (grammar_type == GRAMMAR_TYPE_FACADE) {
-		for (auto it = grammars["facade"][0].attrs.begin(); it != grammars["facade"][mass_grammar_id].attrs.end(); ++it, ++k) {
+		for (auto it = grammars["facade"][0].attrs.begin(); it != grammars["facade"][0].attrs.end(); ++it, ++k) {
 			msg = msg.arg(pm_params["facade"][k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
 		}
 	}
@@ -976,7 +976,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 0) {
 			pm_params["facade"][0] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
-		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateGeometry();
 		updateStatusBar();
 		update();
 		break;
@@ -987,7 +987,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 1) {
 			pm_params["facade"][1] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
-		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateGeometry();
 		updateStatusBar();
 		update();
 		break;
@@ -998,7 +998,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 2) {
 			pm_params["facade"][2] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
-		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateGeometry();
 		updateStatusBar();
 		update();
 		break;
@@ -1009,7 +1009,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 3) {
 			pm_params["facade"][3] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
-		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateGeometry();
 		updateStatusBar();
 		update();
 		break;
@@ -1020,7 +1020,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 4) {
 			pm_params["facade"][4] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
-		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateGeometry();
 		updateStatusBar();
 		update();
 		break;
@@ -1031,7 +1031,7 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 5) {
 			pm_params["facade"][5] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
 		}
-		updateGeometry();// grammars["mass"][grammar_id], pm_params);
+		updateGeometry();
 		updateStatusBar();
 		update();
 		break;

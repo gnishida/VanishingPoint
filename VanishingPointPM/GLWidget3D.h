@@ -42,7 +42,7 @@ public:
 
 	// grammars
 	std::map<std::string, std::vector<cga::Grammar>> grammars;
-	int mass_grammar_id;
+	std::map<std::string, int> grammar_ids;
 	std::map<std::string, std::vector<float>> pm_params;
 	std::vector<boost::shared_ptr<glutils::Face>> faces;
 
