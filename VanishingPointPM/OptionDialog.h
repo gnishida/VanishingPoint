@@ -26,6 +26,10 @@ public:
 	QColor getSilhouetteColor();
 	void setMassGrammarId(int massGrammarId);
 	int getMassGrammarId();
+	void setFacadeGrammarId(int facadeGrammarId);
+	int getFacadeGrammarId();
+	void setWindowGrammarId(int windowGrammarId);
+	int getWindowGrammarId();
 
 	public slots:
 	void onOK();

@@ -22,22 +22,6 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 	shiftPressed = false;
 	altPressed = false;
 
-	grammar_type = GRAMMAR_TYPE_MASS;
-	grammar_ids["mass"] = 0;
-	pm_params["mass"].resize(3);
-	pm_params["mass"][0] = 0.5;
-	pm_params["mass"][1] = 0.5;
-	pm_params["mass"][2] = 0.5;
-	pm_params["facade"].resize(4);
-	pm_params["facade"][0] = 0.5;
-	pm_params["facade"][1] = 0.5;
-	pm_params["facade"][2] = 0.5;
-	pm_params["facade"][3] = 0.5;
-	pm_params["window"].resize(3);
-	pm_params["window"][0] = 0.5;
-	pm_params["window"][1] = 0.5;
-	pm_params["window"][2] = 0.5;
-
 	// Grammarを読み込む
 	{
 		grammars["mass"].resize(9);
@@ -51,12 +35,29 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 		cga::parseGrammar("cga/mass/contour_08.xml", grammars["mass"][7]);
 		cga::parseGrammar("cga/mass/contour_09.xml", grammars["mass"][8]);
 
-		grammars["facade"].resize(1);
+		grammars["facade"].resize(2);
 		cga::parseGrammar("cga/facade/facade_01.xml", grammars["facade"][0]);
+		cga::parseGrammar("cga/facade/facade_02.xml", grammars["facade"][1]);
 
-		grammars["window"].resize(1);
+		grammars["window"].resize(9);
 		cga::parseGrammar("cga/window/window_01.xml", grammars["window"][0]);
+		cga::parseGrammar("cga/window/window_02.xml", grammars["window"][1]);
+		cga::parseGrammar("cga/window/window_03.xml", grammars["window"][2]);
+		cga::parseGrammar("cga/window/window_04.xml", grammars["window"][3]);
+		cga::parseGrammar("cga/window/window_05.xml", grammars["window"][4]);
+		cga::parseGrammar("cga/window/window_06.xml", grammars["window"][5]);
+		cga::parseGrammar("cga/window/window_07.xml", grammars["window"][6]);
+		cga::parseGrammar("cga/window/window_08.xml", grammars["window"][7]);
+		cga::parseGrammar("cga/window/window_09.xml", grammars["window"][8]);
 	}
+
+	grammar_type = GRAMMAR_TYPE_MASS;
+	grammar_ids["mass"] = 0;
+	pm_params["mass"].resize(grammars["mass"][0].attrs.size(), 0.5);
+	grammar_ids["facade"] = 0;
+	pm_params["facade"].resize(grammars["facade"][0].attrs.size(), 0.5);
+	grammar_ids["window"] = 0;
+	pm_params["window"].resize(grammars["window"][0].attrs.size(), 0.5);
 
 	pen_type = PEN_TYPE_VANISHING_LINE;
 	lineWidth = 3;
@@ -835,6 +836,7 @@ void GLWidget3D::updateGeometry(cga::Grammar& grammar, const std::vector<float>&
 	renderManager.removeObjects();
 	renderManager.addFaces(faces, true);
 
+	// update shadow map
 	renderManager.updateShadowMap(this, light_dir, light_mvpMatrix);
 }
 
@@ -842,8 +844,8 @@ void GLWidget3D::updateGeometry() {
 	// set param values
 	cga::setParamValues(grammars["mass"][grammar_ids["mass"]], pm_params["mass"]);
 	if (grammar_type == GRAMMAR_TYPE_FACADE) {
-		cga::setParamValues(grammars["facade"][0], pm_params["facade"]);
-		cga::setParamValues(grammars["window"][0], pm_params["window"]);
+		cga::setParamValues(grammars["facade"][grammar_ids["facade"]], pm_params["facade"]);
+		cga::setParamValues(grammars["window"][grammar_ids["window"]], pm_params["window"]);
 	}
 
 	// setup CGA
@@ -857,8 +859,8 @@ void GLWidget3D::updateGeometry() {
 	std::vector<cga::Grammar*> grammar_list;
 	grammar_list.push_back(&grammars["mass"][grammar_ids["mass"]]);
 	if (grammar_type == GRAMMAR_TYPE_FACADE) {
-		grammar_list.push_back(&grammars["facade"][0]);
-		grammar_list.push_back(&grammars["window"][0]);
+		grammar_list.push_back(&grammars["facade"][grammar_ids["facade"]]);
+		grammar_list.push_back(&grammars["window"][grammar_ids["window"]]);
 	}
 
 	// generate 3d model
@@ -867,6 +869,9 @@ void GLWidget3D::updateGeometry() {
 	cga.generateGeometry(faces, true);
 	renderManager.removeObjects();
 	renderManager.addFaces(faces, true);
+
+	// update shadow map
+	renderManager.updateShadowMap(this, light_dir, light_mvpMatrix);
 }
 
 void GLWidget3D::textureMapping() {
@@ -920,36 +925,30 @@ void GLWidget3D::textureMapping() {
 }
 
 void GLWidget3D::updateStatusBar() {
-	QString format("rot=(%1, %2, %3), pos=(%4, %5, %6), fov=%7, O=(%8, %9), PM=(");
-	if (grammar_type == GRAMMAR_TYPE_MASS) {
-		for (int i = 0; i < pm_params["mass"].size(); ++i) {
-			if (i > 0) format += ", ";
-			format += "%" + QString::number(10 + i);
-		}
-	}
-	else if (grammar_type == GRAMMAR_TYPE_FACADE) {
-		for (int i = 0; i < pm_params["facade"].size(); ++i) {
-			if (i > 0) format += ", ";
-			format += "%" + QString::number(10 + i);
-		}
-	}
-	format += ")";
+	char buff[256];
 
-	QString msg = format.arg(camera.xrot).arg(camera.yrot).arg(camera.zrot).arg(camera.pos.x).arg(camera.pos.y).arg(camera.pos.z).arg(camera.fovy).arg(camera.center.x).arg(camera.center.y);
+	QString format("rot=(%.3f, %.3f, %.3f), fov=%.3f, O=(%.6f, %.6f), pos=(%.3f, %.3f, %.3f), PM=(");
+	sprintf(buff, format.toUtf8().constData(), camera.xrot, camera.yrot, camera.zrot, camera.fovy, camera.center.x, camera.center.y, camera.pos.x, camera.pos.y, camera.pos.z);
 
-	// add PM parameter values (instead of normalized ones!)
+	QString msg(buff);
+
 	int k = 0;
 	if (grammar_type == GRAMMAR_TYPE_MASS) {
 		for (auto it = grammars["mass"][grammar_ids["mass"]].attrs.begin(); it != grammars["mass"][grammar_ids["mass"]].attrs.end(); ++it, ++k) {
-			msg = msg.arg(pm_params["mass"][k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
+			if (k > 0) msg += ", ";
+			sprintf(buff, "%.3f", pm_params["mass"][k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
+			msg += buff;
 		}
 	}
 	else if (grammar_type == GRAMMAR_TYPE_FACADE) {
-		for (auto it = grammars["facade"][0].attrs.begin(); it != grammars["facade"][0].attrs.end(); ++it, ++k) {
-			msg = msg.arg(pm_params["facade"][k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
+		for (auto it = grammars["facade"][grammar_ids["facade"]].attrs.begin(); it != grammars["facade"][grammar_ids["facade"]].attrs.end(); ++it, ++k) {
+			if (k > 0) msg += ", ";
+			sprintf(buff, "%.3f", pm_params["facade"][k] * (it->second.range_end - it->second.range_start) + it->second.range_start);
+			msg += buff;
 		}
 	}
-
+	msg += ")";
+	
 	mainWin->statusBar()->showMessage(msg);
 }
 

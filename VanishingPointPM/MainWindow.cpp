@@ -189,6 +189,8 @@ void MainWindow::onOption() {
 	dlg.setSilhouetteWidth(glWidget->silhouetteWidth);
 	dlg.setSilhouetteColor(glWidget->silhouetteColor);
 	dlg.setMassGrammarId(glWidget->grammar_ids["mass"]);
+	dlg.setFacadeGrammarId(glWidget->grammar_ids["facade"]);
+	dlg.setWindowGrammarId(glWidget->grammar_ids["window"]);
 
 	if (dlg.exec()) {
 		glWidget->lineWidth = dlg.getContourLineWidth();
@@ -197,10 +199,12 @@ void MainWindow::onOption() {
 		glWidget->verticalColor = dlg.getVerticalColor();
 		glWidget->silhouetteWidth = dlg.getSilhouetteWidth();
 		glWidget->silhouetteColor = dlg.getSilhouetteColor();
-		if (glWidget->grammar_ids["mass"] != dlg.getMassGrammarId()) {
-			glWidget->grammar_ids["mass"] = dlg.getMassGrammarId();
-			glWidget->pm_params["mass"].resize(glWidget->grammars["mass"][glWidget->grammar_ids["mass"]].attrs.size());
-			glWidget->updateGeometry();
-		}
+		glWidget->grammar_ids["mass"] = dlg.getMassGrammarId();
+		glWidget->grammar_ids["facade"] = dlg.getFacadeGrammarId();
+		glWidget->grammar_ids["window"] = dlg.getWindowGrammarId();
+		glWidget->pm_params["mass"].resize(glWidget->grammars["mass"][glWidget->grammar_ids["mass"]].attrs.size());
+		glWidget->pm_params["facade"].resize(glWidget->grammars["facade"][glWidget->grammar_ids["facade"]].attrs.size());
+		glWidget->pm_params["window"].resize(glWidget->grammars["window"][glWidget->grammar_ids["window"]].attrs.size());
+		glWidget->updateGeometry();
 	}
 }

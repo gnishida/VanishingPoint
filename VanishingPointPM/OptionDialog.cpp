@@ -73,6 +73,22 @@ int OptionDialog::getMassGrammarId() {
 	return ui.lineEditMassGrammarId->text().toInt() - 1;
 }
 
+void OptionDialog::setFacadeGrammarId(int facadeGrammarId) {
+	ui.lineEditFacadeGrammarId->setText(QString::number(facadeGrammarId + 1));
+}
+
+int OptionDialog::getFacadeGrammarId() {
+	return ui.lineEditFacadeGrammarId->text().toInt() - 1;
+}
+
+void OptionDialog::setWindowGrammarId(int windowGrammarId) {
+	ui.lineEditWindowGrammarId->setText(QString::number(windowGrammarId + 1));
+}
+
+int OptionDialog::getWindowGrammarId() {
+	return ui.lineEditWindowGrammarId->text().toInt() - 1;
+}
+
 void OptionDialog::onOK() {
 	accept();
 }

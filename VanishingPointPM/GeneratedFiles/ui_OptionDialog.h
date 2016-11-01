@@ -60,12 +60,16 @@ public:
     QLineEdit *lineEditSilhouetteRed;
     QLabel *label_19;
     QLineEdit *lineEditSilhouetteWidth;
+    QLineEdit *lineEditFacadeGrammarId;
+    QLabel *label_20;
+    QLineEdit *lineEditWindowGrammarId;
+    QLabel *label_21;
 
     void setupUi(QDialog *OptionDialog)
     {
         if (OptionDialog->objectName().isEmpty())
             OptionDialog->setObjectName(QStringLiteral("OptionDialog"));
-        OptionDialog->resize(323, 281);
+        OptionDialog->resize(323, 340);
         label = new QLabel(OptionDialog);
         label->setObjectName(QStringLiteral("label"));
         label->setGeometry(QRect(20, 20, 101, 16));
@@ -137,10 +141,10 @@ public:
         label_13->setGeometry(QRect(260, 110, 16, 16));
         pushButtonOK = new QPushButton(OptionDialog);
         pushButtonOK->setObjectName(QStringLiteral("pushButtonOK"));
-        pushButtonOK->setGeometry(QRect(50, 240, 91, 31));
+        pushButtonOK->setGeometry(QRect(50, 300, 91, 31));
         pushButtonCancel = new QPushButton(OptionDialog);
         pushButtonCancel->setObjectName(QStringLiteral("pushButtonCancel"));
-        pushButtonCancel->setGeometry(QRect(190, 240, 91, 31));
+        pushButtonCancel->setGeometry(QRect(190, 300, 91, 31));
         label_14 = new QLabel(OptionDialog);
         label_14->setObjectName(QStringLiteral("label_14"));
         label_14->setGeometry(QRect(20, 200, 121, 16));
@@ -174,6 +178,18 @@ public:
         lineEditSilhouetteWidth = new QLineEdit(OptionDialog);
         lineEditSilhouetteWidth->setObjectName(QStringLiteral("lineEditSilhouetteWidth"));
         lineEditSilhouetteWidth->setGeometry(QRect(160, 140, 71, 20));
+        lineEditFacadeGrammarId = new QLineEdit(OptionDialog);
+        lineEditFacadeGrammarId->setObjectName(QStringLiteral("lineEditFacadeGrammarId"));
+        lineEditFacadeGrammarId->setGeometry(QRect(160, 230, 71, 20));
+        label_20 = new QLabel(OptionDialog);
+        label_20->setObjectName(QStringLiteral("label_20"));
+        label_20->setGeometry(QRect(20, 230, 121, 16));
+        lineEditWindowGrammarId = new QLineEdit(OptionDialog);
+        lineEditWindowGrammarId->setObjectName(QStringLiteral("lineEditWindowGrammarId"));
+        lineEditWindowGrammarId->setGeometry(QRect(160, 260, 71, 20));
+        label_21 = new QLabel(OptionDialog);
+        label_21->setObjectName(QStringLiteral("label_21"));
+        label_21->setGeometry(QRect(20, 260, 121, 16));
         QWidget::setTabOrder(lineEditContourLineWidth, lineEditHorizontalLeftRed);
         QWidget::setTabOrder(lineEditHorizontalLeftRed, lineEditHorizontalLeftGreen);
         QWidget::setTabOrder(lineEditHorizontalLeftGreen, lineEditHorizontalLeftBlue);
@@ -220,6 +236,8 @@ public:
         label_17->setText(QApplication::translate("OptionDialog", "R", 0));
         label_18->setText(QApplication::translate("OptionDialog", "Silhouette color:", 0));
         label_19->setText(QApplication::translate("OptionDialog", "Silhouette width:", 0));
+        label_20->setText(QApplication::translate("OptionDialog", "facade grammar id:", 0));
+        label_21->setText(QApplication::translate("OptionDialog", "window grammar id:", 0));
     } // retranslateUi
 
 };

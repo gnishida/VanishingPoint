@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>323</width>
-    <height>281</height>
+    <height>340</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -286,7 +286,7 @@
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>240</y>
+     <y>300</y>
      <width>91</width>
      <height>31</height>
     </rect>
@@ -299,7 +299,7 @@
    <property name="geometry">
     <rect>
      <x>190</x>
-     <y>240</y>
+     <y>300</y>
      <width>91</width>
      <height>31</height>
     </rect>
@@ -434,6 +434,52 @@
      <width>71</width>
      <height>20</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEditFacadeGrammarId">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>230</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_20">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>230</y>
+     <width>121</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>facade grammar id:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEditWindowGrammarId">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>260</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_21">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>260</y>
+     <width>121</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>window grammar id:</string>
    </property>
   </widget>
  </widget>
