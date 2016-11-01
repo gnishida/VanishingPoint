@@ -906,7 +906,7 @@ void GLWidget3D::textureMapping() {
 			time_t now = clock();
 
 			// save the texture image
-			QString name = QString("textures/rectified_%1_%2.png").arg(now).arg(i);
+			QString name = QString("textures/%1_%2_%3.png").arg(faces[i]->name.c_str()).arg(i).arg(now);
 			cv::imwrite(name.toUtf8().constData(), rectifiedImage);
 
 			faces[i]->texture = name.toUtf8().constData();
