@@ -24,7 +24,7 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 
 	// Grammarを読み込む
 	{
-		grammars["mass"].resize(9);
+		grammars["mass"].resize(10);
 		cga::parseGrammar("cga/mass/contour_01.xml", grammars["mass"][0]);
 		cga::parseGrammar("cga/mass/contour_02.xml", grammars["mass"][1]);
 		cga::parseGrammar("cga/mass/contour_03.xml", grammars["mass"][2]);
@@ -34,6 +34,7 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 		cga::parseGrammar("cga/mass/contour_07.xml", grammars["mass"][6]);
 		cga::parseGrammar("cga/mass/contour_08.xml", grammars["mass"][7]);
 		cga::parseGrammar("cga/mass/contour_09.xml", grammars["mass"][8]);
+		cga::parseGrammar("cga/mass/contour_10.xml", grammars["mass"][9]);
 
 		grammars["facade"].resize(2);
 		cga::parseGrammar("cga/facade/facade_01.xml", grammars["facade"][0]);
