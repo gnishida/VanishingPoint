@@ -884,38 +884,92 @@ void GLWidget3D::textureMapping() {
 	cv::cvtColor(imageMat, imageMat, cv::COLOR_BGRA2BGR);
 
 	// rectify the facade image
-	for (int i = 0; i < faces.size(); ++i) {
-		std::vector<cv::Point2f> pts;
-		std::vector<glm::vec3> pts3d;
-		for (int j = 0; j < faces[i]->vertices.size(); ++j) {
-			if (j == 3 || j == 4) continue;
+	for (int fi = 0; fi < faces.size(); ++fi) {
+		// non-quadratic face is not supported.
+		if (faces[fi]->vertices.size() % 6 != 0) continue;
 
-			pts3d.push_back(faces[i]->vertices[j].position);
+		std::vector<cv::Mat> rectified_images;
+		std::vector<bool> visibilities;
+		bool visible = false;
 
-			glm::vec2 pp = utils::projectPoint(width(), height(), faces[i]->vertices[j].position, camera.mvpMatrix);
-			pts.push_back(cv::Point2f(pp.x, pp.y));
+		// we create a texture for each quad because the face might be curved
+		for (int qi = 0; qi < faces[fi]->vertices.size() / 6; ++qi) {
+			// obtain the 2d/3d coordinates of the quad
+			std::vector<cv::Point2f> pts;
+			std::vector<glm::vec3> pts3d;
+			for (int k = 0; k < 6; ++k) {
+				if (k == 3 || k == 4) continue;
+
+				int vi = qi * 6 + k;
+
+				pts3d.push_back(faces[fi]->vertices[vi].position);
+
+				glm::vec2 pp = utils::projectPoint(width(), height(), faces[fi]->vertices[vi].position, camera.mvpMatrix);
+				pts.push_back(cv::Point2f(pp.x, pp.y));
+			}
+
+			// check if the quad is visible
+			glm::vec3 normal = glm::cross(pts3d[1] - pts3d[0], pts3d[2] - pts3d[1]);
+			normal = glm::vec3(camera.mvMatrix * glm::vec4(normal, 0));
+			glm::vec3 view_dir = glm::vec3(camera.mvMatrix * glm::vec4(pts3d[0], 1));
+			if (glm::dot(normal, view_dir) < 0) {
+				visible = true;
+				visibilities.push_back(true);
+
+				// rectify the facade image
+				cv::Mat transformMat;
+				cv::Mat rectifiedImage = cvutils::rectify_image(imageMat, pts, transformMat, glm::length(pts3d[1] - pts3d[0]) / glm::length(pts3d[2] - pts3d[1]));
+				rectifiedImage = cvutils::adjust_contrast(rectifiedImage);
+
+				rectified_images.push_back(rectifiedImage);
+			}
+			else {
+				visibilities.push_back(false);
+				rectified_images.push_back(cv::Mat(glm::length(pts3d[2] - pts3d[1]) * 100, glm::length(pts3d[1] - pts3d[0]) * 100, CV_8UC3));
+			}
 		}
 
-		// check if the face is visible
-		if (pts3d.size() < 3) continue;
-		glm::vec3 normal = glm::cross(pts3d[1] - pts3d[0], pts3d[2] - pts3d[1]);
-		normal = glm::vec3(camera.mvMatrix * glm::vec4(normal, 0));
-		glm::vec3 view_dir = glm::vec3(camera.mvMatrix * glm::vec4(pts3d[0], 1));
-		if (glm::dot(normal, view_dir) >= 0) continue;
-			
-		if (pts.size() == 4) {
-			// rectify the facade image
-			cv::Mat transformMat;
-			cv::Mat rectifiedImage = cvutils::rectify_image(imageMat, pts, transformMat, glm::length(pts3d[1] - pts3d[0]) / glm::length(pts3d[2] - pts3d[1]));
-			rectifiedImage = cvutils::adjust_contrast(rectifiedImage);
+		// save the texture image
+		if (visible) {
+			// obtain the largest height of the images
+			int height_max = 0;
+			for (int i = 0; i < rectified_images.size(); ++i) {
+				if (visibilities[i]) {
+					if (rectified_images[i].rows > height_max) {
+						height_max = rectified_images[i].rows;
+					}
+				}
+			}
+
+			// determine the size of the merged texture
+			int width_total = 0;
+			for (int i = 0; i < rectified_images.size(); ++i) {
+				width_total += (float)rectified_images[i].cols * height_max / rectified_images[i].rows;
+			}
+
+			// initialize the texture
+			cv::Mat textureImg(height_max, width_total, CV_8UC3, cv::Scalar(255, 255, 255));
+
+			// merge the texture
+			int offset = 0;
+			for (int i = 0; i < rectified_images.size(); ++i) {
+				int width = (float)rectified_images[i].cols * height_max / rectified_images[i].rows;
+
+				if (visibilities[i]) {
+					cv::Mat roi(textureImg, cv::Rect(offset, 0, width, height_max));
+					
+					cv::resize(rectified_images[i], rectified_images[i], cv::Size(width, height_max));
+					rectified_images[i].copyTo(roi);
+				}
+
+				offset += width;
+			}
 
 			time_t now = clock();
+			QString name = QString("textures/%1_%2_%3.png").arg(faces[fi]->name.c_str()).arg(fi).arg(now);
+			cv::imwrite(name.toUtf8().constData(), textureImg);
 
-			// save the texture image
-			QString name = QString("textures/%1_%2_%3.png").arg(faces[i]->name.c_str()).arg(i).arg(now);
-			cv::imwrite(name.toUtf8().constData(), rectifiedImage);
-
-			faces[i]->texture = name.toUtf8().constData();
+			faces[fi]->texture = name.toUtf8().constData();
 		}
 	}
 
