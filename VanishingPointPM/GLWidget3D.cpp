@@ -1087,6 +1087,50 @@ void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 		updateStatusBar();
 		update();
 		break;
+	case Qt::Key_7:
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 6) {
+			pm_params["mass"][6] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 6) {
+			pm_params["facade"][6] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();
+		updateStatusBar();
+		update();
+		break;
+	case Qt::Key_8:
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 7) {
+			pm_params["mass"][7] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 7) {
+			pm_params["facade"][7] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();
+		updateStatusBar();
+		update();
+		break;
+	case Qt::Key_9:
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 8) {
+			pm_params["mass"][8] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 8) {
+			pm_params["facade"][8] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();
+		updateStatusBar();
+		update();
+		break;
+	case Qt::Key_0:
+		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 9) {
+			pm_params["mass"][9] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		else if (grammar_type == GRAMMAR_TYPE_FACADE && pm_params["facade"].size() > 9) {
+			pm_params["facade"][9] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
+		}
+		updateGeometry();
+		updateStatusBar();
+		update();
+		break;
 	case Qt::Key_Left:
 		camera.pos.x += 0.5 * (ctrlPressed ? 0.1 : 1);
 		camera.updateMVPMatrix();
