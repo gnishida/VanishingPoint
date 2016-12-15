@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<grammar version="1.0" author="Gen Nishida">
+<grammar type="building" version="1.0" author="Gen Nishida">
 	<!-- parameters -->
-	<attr name="depth" value="10" range="4,50"/>
-	<attr name="height" value="10" range="4,50"/>
-	<attr name="roof_height" value="1" range="0.1,1.5"/>
-	<attr name="roof_overhang" value="0.5" range="0.01,1.5"/>
-	<attr name="width" value="10" range="4,50"/>
+	<attr name="corner_cut_length" value="4" range="2,14"/>
+	<attr name="depth" value="15" range="15,40"/>
+	<attr name="height" value="10" range="5,40"/>
+	<attr name="roof_height" value="1" range="0,2"/>
+	<attr name="roof_overhang" value="0.5" range="0,1.5"/>
+	<attr name="width" value="15" range="15,42"/>
 	
-	<!-- building mass -->
 	<rule name="Start">
 		<translate mode="rel" coordSystem="world">
 			<param name="x" type="absolute" value="0"/>
@@ -19,6 +19,7 @@
 			<param name="ySize" type="absolute" value="depth"/>
 			<param name="zSize" type="absolute" value="0"/>
 		</size>
+		<cornerCut type="negative_curve" length="corner_cut_length"/>
 		<extrude height="height"/>
 		<comp>
 			<param name="side" value="Facade"/>
@@ -60,4 +61,4 @@
 			<param name="top" value="RoofTop"/>
 		</comp>
 	</rule>
-</grammar>
+</rules>
