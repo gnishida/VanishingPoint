@@ -257,6 +257,15 @@
     <ClCompile Include="CVUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Arch.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ArchPrism.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InnerArchOperator.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MainWindow.h">
@@ -475,6 +484,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CVUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Arch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ArchPrism.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InnerArchOperator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
