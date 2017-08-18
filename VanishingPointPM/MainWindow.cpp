@@ -34,7 +34,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionSaveSilhouette, SIGNAL(triggered()), this, SLOT(onSaveSilhouette()));
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
 	connect(ui.actionUndo, SIGNAL(triggered()), this, SLOT(onUndo()));
-	connect(ui.actionComputeVanishingPoint, SIGNAL(triggered()), this, SLOT(onComputeVanishingPoint()));
 	connect(ui.actionComputeCameraMatrix, SIGNAL(triggered()), this, SLOT(onComputeCameraMatrix()));
 	connect(ui.action3DReconstruction, SIGNAL(triggered()), this, SLOT(on3DReconstruction()));
 	connect(ui.action3DReconstructionAll, SIGNAL(triggered()), this, SLOT(on3DReconstructionAll()));
@@ -114,10 +113,6 @@ void MainWindow::onUndo() {
 	glWidget->undo();
 }
 
-void MainWindow::onComputeVanishingPoint() {
-	glWidget->computeVanishingPoint();
-}
-
 void MainWindow::onComputeCameraMatrix() {
 	glWidget->computeCameraMatrix();
 	glWidget->update();
@@ -182,7 +177,7 @@ void MainWindow::onGrammarChanged() {
 
 void MainWindow::onOption() {
 	OptionDialog dlg;
-	dlg.setContourLineWidth(glWidget->lineWidth);
+	dlg.setVanishingLineWidth(glWidget->lineWidth);
 	dlg.setHorizontalLeftColor(glWidget->horizontalLeftColor);
 	dlg.setHorizontalRightColor(glWidget->horizontalRightColor);
 	dlg.setVerticalColor(glWidget->verticalColor);
@@ -193,7 +188,7 @@ void MainWindow::onOption() {
 	dlg.setWindowGrammarId(glWidget->grammar_ids["window"]);
 
 	if (dlg.exec()) {
-		glWidget->lineWidth = dlg.getContourLineWidth();
+		glWidget->lineWidth = dlg.getVanishingLineWidth();
 		glWidget->horizontalLeftColor = dlg.getHorizontalLeftColor();
 		glWidget->horizontalRightColor = dlg.getHorizontalRightColor();
 		glWidget->verticalColor = dlg.getVerticalColor();

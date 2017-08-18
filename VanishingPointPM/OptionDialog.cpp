@@ -1,8 +1,19 @@
 #include "OptionDialog.h"
+#include <QColorDialog>
 
 OptionDialog::OptionDialog(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
 
+	ui.spinBoxVanishingLineWidth->setRange(1, 10);
+	ui.spinBoxSilhouetteLineWidth->setRange(1, 10);
+	ui.spinBoxMassGrammarId->setRange(1, 10);
+	ui.spinBoxFacadeGrammarId->setRange(1, 10);
+	ui.spinBoxWindowGrammarId->setRange(1, 10);
+
+	connect(ui.pushButtonHorizontalLeftLineColor, SIGNAL(clicked()), this, SLOT(onHorizontalLeftLineColor()));
+	connect(ui.pushButtonHorizontalRightLineColor, SIGNAL(clicked()), this, SLOT(onHorizontalRightLineColor()));
+	connect(ui.pushButtonVerticalLineColor, SIGNAL(clicked()), this, SLOT(onVerticalLineColor()));
+	connect(ui.pushButtonSilhouetteColor, SIGNAL(clicked()), this, SLOT(onSilhouetteColor()));
 	connect(ui.pushButtonOK, SIGNAL(clicked()), this, SLOT(onOK()));
 	connect(ui.pushButtonCancel, SIGNAL(clicked()), this, SLOT(onCancel()));
 }
@@ -10,83 +21,107 @@ OptionDialog::OptionDialog(QWidget *parent) : QDialog(parent) {
 OptionDialog::~OptionDialog() {
 }
 
-void OptionDialog::setContourLineWidth(int contourLineWidth) {
-	ui.lineEditContourLineWidth->setText(QString::number(contourLineWidth));
+void OptionDialog::setVanishingLineWidth(int vanishingLineWidth) {
+	ui.spinBoxVanishingLineWidth->setValue(vanishingLineWidth);
 }
-int OptionDialog::getContourLineWidth() {
-	return ui.lineEditContourLineWidth->text().toInt();
+int OptionDialog::getVanishingLineWidth() {
+	return ui.spinBoxVanishingLineWidth->value();
 }
 
-void OptionDialog::setHorizontalLeftColor(const QColor& horizontalLeftColor) {
-	ui.lineEditHorizontalLeftRed->setText(QString::number(horizontalLeftColor.red()));
-	ui.lineEditHorizontalLeftGreen->setText(QString::number(horizontalLeftColor.green()));
-	ui.lineEditHorizontalLeftBlue->setText(QString::number(horizontalLeftColor.blue()));
+void OptionDialog::setHorizontalLeftColor(const QColor& horizontalLeftLineColor) {
+	this->horizontalLeftLineColor = horizontalLeftLineColor;
+	ui.pushButtonHorizontalLeftLineColor->setStyleSheet("border: 2px solid black; background-color: " + horizontalLeftLineColor.name() + ";");
 }
 
 QColor OptionDialog::getHorizontalLeftColor() {
-	return QColor(ui.lineEditHorizontalLeftRed->text().toInt(), ui.lineEditHorizontalLeftGreen->text().toInt(), ui.lineEditHorizontalLeftBlue->text().toInt());
+	return horizontalLeftLineColor;
 }
 
-void OptionDialog::setHorizontalRightColor(const QColor& horizontalRightColor) {
-	ui.lineEditHorizontalRightRed->setText(QString::number(horizontalRightColor.red()));
-	ui.lineEditHorizontalRightGreen->setText(QString::number(horizontalRightColor.green()));
-	ui.lineEditHorizontalRightBlue->setText(QString::number(horizontalRightColor.blue()));
+void OptionDialog::setHorizontalRightColor(const QColor& horizontalRightLineColor) {
+	this->horizontalRightLineColor = horizontalRightLineColor;
+	ui.pushButtonHorizontalRightLineColor->setStyleSheet("border: 2px solid black; background-color: " + horizontalRightLineColor.name() + ";");
 }
 
 QColor OptionDialog::getHorizontalRightColor() {
-	return QColor(ui.lineEditHorizontalRightRed->text().toInt(), ui.lineEditHorizontalRightGreen->text().toInt(), ui.lineEditHorizontalRightBlue->text().toInt());
+	return horizontalRightLineColor;
 }
 
-void OptionDialog::setVerticalColor(const QColor& verticalColor) {
-	ui.lineEditVerticalRed->setText(QString::number(verticalColor.red()));
-	ui.lineEditVerticalGreen->setText(QString::number(verticalColor.green()));
-	ui.lineEditVerticalBlue->setText(QString::number(verticalColor.blue()));
+void OptionDialog::setVerticalColor(const QColor& verticalLineColor) {
+	this->verticalLineColor = verticalLineColor;
+	ui.pushButtonVerticalLineColor->setStyleSheet("border: 2px solid black; background-color: " + verticalLineColor.name() + ";");
 }
 
 QColor OptionDialog::getVerticalColor() {
-	return QColor(ui.lineEditVerticalRed->text().toInt(), ui.lineEditVerticalGreen->text().toInt(), ui.lineEditVerticalBlue->text().toInt());
+	return verticalLineColor;
 }
 
 void OptionDialog::setSilhouetteWidth(int silhouetteWidth) {
-	ui.lineEditSilhouetteWidth->setText(QString::number(silhouetteWidth));
+	ui.spinBoxSilhouetteLineWidth->setValue(silhouetteWidth);
 }
 
 int OptionDialog::getSilhouetteWidth() {
-	return ui.lineEditSilhouetteWidth->text().toInt();
+	return ui.spinBoxSilhouetteLineWidth->value();
 }
 
 void OptionDialog::setSilhouetteColor(const QColor& silhouetteColor) {
-	ui.lineEditSilhouetteRed->setText(QString::number(silhouetteColor.red()));
-	ui.lineEditSilhouetteGreen->setText(QString::number(silhouetteColor.green()));
-	ui.lineEditSilhouetteBlue->setText(QString::number(silhouetteColor.blue()));
+	this->silhouetteColor = silhouetteColor;
+	ui.pushButtonSilhouetteColor->setStyleSheet("border: 2px solid black; background-color: " + silhouetteColor.name() + ";");
 }
 
 QColor OptionDialog::getSilhouetteColor() {
-	return QColor(ui.lineEditSilhouetteRed->text().toInt(), ui.lineEditSilhouetteGreen->text().toInt(), ui.lineEditSilhouetteBlue->text().toInt());
+	return silhouetteColor;
 }
 
 void OptionDialog::setMassGrammarId(int massGrammarId) {
-	ui.lineEditMassGrammarId->setText(QString::number(massGrammarId + 1));
+	ui.spinBoxMassGrammarId->setValue(massGrammarId + 1);
 }
 
 int OptionDialog::getMassGrammarId() {
-	return ui.lineEditMassGrammarId->text().toInt() - 1;
+	return ui.spinBoxMassGrammarId->value() - 1;
 }
 
 void OptionDialog::setFacadeGrammarId(int facadeGrammarId) {
-	ui.lineEditFacadeGrammarId->setText(QString::number(facadeGrammarId + 1));
+	ui.spinBoxFacadeGrammarId->setValue(facadeGrammarId + 1);
 }
 
 int OptionDialog::getFacadeGrammarId() {
-	return ui.lineEditFacadeGrammarId->text().toInt() - 1;
+	return ui.spinBoxFacadeGrammarId->value() - 1;
 }
 
 void OptionDialog::setWindowGrammarId(int windowGrammarId) {
-	ui.lineEditWindowGrammarId->setText(QString::number(windowGrammarId + 1));
+	ui.spinBoxWindowGrammarId->setValue(windowGrammarId + 1);
 }
 
 int OptionDialog::getWindowGrammarId() {
-	return ui.lineEditWindowGrammarId->text().toInt() - 1;
+	return ui.spinBoxWindowGrammarId->value() - 1;
+}
+
+void OptionDialog::onHorizontalLeftLineColor() {
+	QColor tmp = QColorDialog::getColor(horizontalLeftLineColor);
+	if (tmp.isValid()) {
+		setHorizontalLeftColor(tmp);
+	}
+}
+
+void OptionDialog::onHorizontalRightLineColor() {
+	QColor tmp = QColorDialog::getColor(horizontalRightLineColor);
+	if (tmp.isValid()) {
+		setHorizontalRightColor(tmp);
+	}
+}
+
+void OptionDialog::onVerticalLineColor() {
+	QColor tmp = QColorDialog::getColor(verticalLineColor);
+	if (tmp.isValid()) {
+		setVerticalColor(tmp);
+	}
+}
+
+void OptionDialog::onSilhouetteColor() {
+	QColor tmp = QColorDialog::getColor(silhouetteColor);
+	if (tmp.isValid()) {
+		setSilhouetteColor(tmp);
+	}
 }
 
 void OptionDialog::onOK() {

@@ -54,7 +54,7 @@ GLWidget3D::GLWidget3D(MainWindow *parent) : QGLWidget(QGLFormat(QGL::SampleBuff
 	}
 
 	grammar_type = GRAMMAR_TYPE_MASS;
-	grammar_ids["mass"] = 0;
+	grammar_ids["mass"] = 5;
 	pm_params["mass"].resize(grammars["mass"][0].attrs.size(), 0.5);
 	grammar_ids["facade"] = 0;
 	pm_params["facade"].resize(grammars["facade"][0].attrs.size(), 0.5);
@@ -360,7 +360,9 @@ void GLWidget3D::loadImage(const QString& filename) {
 	painter.fillRect(0, 0, image.width(), image.height(), QBrush(QColor(255, 255, 255)));
 	painter.drawImage((width() - newImage.width()) / 2, (height() - newImage.height()) / 2, newImage);
 
-	mainWin->setWindowTitle(QString("Vanishing Point - ") + filename);
+	// clear lines
+	lines.clear();
+	silhouette.clear();
 
 	update();
 }
@@ -468,54 +470,6 @@ void GLWidget3D::undo() {
 			update();
 		}
 	}
-}
-
-void GLWidget3D::computeVanishingPoint() {
-	std::vector<glm::dvec2> vps;
-	vp::computeVanishingPoints(lines, vps);
-
-	for (int i = 0; i < vps.size(); ++i) {
-		std::cout << "vp" << (i + 1) << ": " << vps[i].x << ", " << vps[i].y << std::endl;
-	}
-
-	// determine the bounding box of the resulting image
-	const int margin = 50;
-	int x1 = 0;
-	int y1 = 0;
-	int x2 = width() - 1;
-	int y2 = height() - 1;
-	for (int i = 0; i < vps.size(); ++i) {
-		if (vps[i].x - margin < x1) x1 = vps[i].x - margin;
-		if (vps[i].x + margin > x2) x2 = vps[i].x + margin;
-		if (vps[i].y - margin < y1) y1 = vps[i].y - margin;
-		if (vps[i].y + margin> y2) y2 = vps[i].y + margin;
-	}
-	std::cout << "Rect: " << x1 << ", " << y1 << ", " << x2 << ", " << y2 << std::endl;
-
-	// create a resulting image
-	QImage result(x2 - x1 + 1, y2 - y1 + 1, QImage::Format_RGB32);
-	QPainter painter(&result);
-	painter.fillRect(0, 0, result.width(), result.height(), QBrush(QColor(255, 255, 255)));
-	painter.drawImage(-x1, -y1, image);
-	painter.setPen(QPen(QColor(0, 0, 255), 1, Qt::SolidLine, Qt::RoundCap));
-	for (auto line : lines) {
-		double dist0 = glm::length(line.start - line.end);
-		double dist1 = glm::length(line.start - vps[line.type]);
-		double dist2 = glm::length(line.end - vps[line.type]);
-		if (dist1 < dist2) {
-			line.start = line.start + (line.start - line.end) * (dist1 + margin) / dist0;
-		}
-		else {
-			line.end = line.end + (line.end - line.start) * (dist2 + margin) / dist0;
-		}
-		painter.drawLine(line.start.x - x1, line.start.y - y1, line.end.x - x1, line.end.y - y1);
-	}
-	painter.setPen(QPen(QColor(255, 0, 0), 10, Qt::SolidLine, Qt::RoundCap));
-	for (int i = 0; i < vps.size(); ++i) {
-		painter.drawEllipse(vps[i].x - x1, vps[i].y - y1, 10, 10);
-	}
-	painter.end();
-	result.save("vanishing_points.png");
 }
 
 void GLWidget3D::computeCameraMatrix() {
@@ -1010,18 +964,20 @@ void GLWidget3D::updateStatusBar() {
 
 void GLWidget3D::keyPressEvent(QKeyEvent *e) {
 	ctrlPressed = false;
+	shiftPressed = false;
+	altPressed = false;
 
-	if (e->modifiers() == Qt::ControlModifier) {
+	if (e->modifiers() & Qt::ControlModifier) {
 		ctrlPressed = true;
+	}
+	if (e->modifiers() & Qt::ShiftModifier) {
+		shiftPressed = true;
+	}
+	if (e->modifiers() & Qt::AltModifier) {
+		altPressed = true;
 	}
 
 	switch (e->key()) {
-	case Qt::Key_Shift:
-		shiftPressed = true;
-		break;
-	case Qt::Key_Alt:
-		altPressed = true;
-		break;
 	case Qt::Key_1:
 		if (grammar_type == GRAMMAR_TYPE_MASS && pm_params["mass"].size() > 0) {
 			pm_params["mass"][0] += 0.01 * (ctrlPressed ? 0.1 : 1) * (altPressed ? -1 : 1);
@@ -1225,8 +1181,7 @@ void GLWidget3D::initializeGL() {
 	glUniform1i(glGetUniformLocation(renderManager.programs["ssao"], "tex0"), 0);//tex0: 0
 
 	camera.changeFov(0, 1, width(), height());
-
-
+	
 	updateGeometry();// grammars["mass"][grammar_id], pm_params);
 	updateStatusBar();
 }

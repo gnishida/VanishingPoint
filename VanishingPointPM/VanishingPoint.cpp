@@ -263,6 +263,8 @@ namespace vp {
 		xrot = atan2(-R[2][1], R[2][2]);
 		yrot = atan2(R[2][0], std::hypot(R[2][1], R[2][2]));
 		zrot = atan2(-R[1][0], R[0][0]);
+		if (zrot > M_PI * 0.5) zrot -= M_PI;
+		else if (zrot < -M_PI * 0.5) zrot += M_PI;
 	}
 
 	glm::dvec2 nearestPointOnLine(const glm::dvec2& p1, const glm::dvec2& p2, const glm::dvec2& p) {

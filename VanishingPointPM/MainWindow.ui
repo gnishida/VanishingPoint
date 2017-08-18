@@ -73,7 +73,6 @@
      <addaction name="actionGrammarMass"/>
      <addaction name="actionGrammarFacade"/>
     </widget>
-    <addaction name="actionComputeVanishingPoint"/>
     <addaction name="actionComputeCameraMatrix"/>
     <addaction name="separator"/>
     <addaction name="menuRendering"/>

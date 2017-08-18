@@ -27,7 +27,6 @@ public slots:
 	void onLoadSilhouette();
 	void onSaveSilhouette();
 	void onUndo();
-	void onComputeVanishingPoint();
 	void onComputeCameraMatrix();
 	void on3DReconstruction();
 	void on3DReconstructionAll();

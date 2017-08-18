@@ -167,7 +167,6 @@ public:
         menuFile->addSeparator();
         menuFile->addAction(actionExit);
         menuEdit->addAction(actionUndo);
-        menuTool->addAction(actionComputeVanishingPoint);
         menuTool->addAction(actionComputeCameraMatrix);
         menuTool->addSeparator();
         menuTool->addAction(menuRendering->menuAction());

@@ -4,21 +4,27 @@
 #include <QDialog>
 #include "ui_OptionDialog.h"
 
-class OptionDialog : public QDialog
-{
+class OptionDialog : public QDialog {
 	Q_OBJECT
+
+private:
+	Ui::OptionDialog ui;
+	QColor horizontalLeftLineColor;
+	QColor horizontalRightLineColor;
+	QColor verticalLineColor;
+	QColor silhouetteColor;
 
 public:
 	OptionDialog(QWidget *parent = 0);
 	~OptionDialog();
 
-	void setContourLineWidth(int contourLineWidth);
-	int getContourLineWidth();
-	void setHorizontalLeftColor(const QColor& horizontalLeftColor);
+	void setVanishingLineWidth(int vanishingLineWidth);
+	int getVanishingLineWidth();
+	void setHorizontalLeftColor(const QColor& horizontalLeftLineColor);
 	QColor getHorizontalLeftColor();
-	void setHorizontalRightColor(const QColor& horizontalRightColor);
+	void setHorizontalRightColor(const QColor& horizontalRightLineColor);
 	QColor getHorizontalRightColor();
-	void setVerticalColor(const QColor& verticalColor);
+	void setVerticalColor(const QColor& verticalLineColor);
 	QColor getVerticalColor();
 	void setSilhouetteWidth(int silhouetteWidth);
 	int getSilhouetteWidth();
@@ -31,12 +37,13 @@ public:
 	void setWindowGrammarId(int windowGrammarId);
 	int getWindowGrammarId();
 
-	public slots:
+public slots:
+	void onHorizontalLeftLineColor();
+	void onHorizontalRightLineColor();
+	void onVerticalLineColor();
+	void onSilhouetteColor();
 	void onOK();
 	void onCancel();
-
-private:
-	Ui::OptionDialog ui;
 };
 
 #endif // OPTIONDIALOG_H

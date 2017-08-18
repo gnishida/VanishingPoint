@@ -76,7 +76,6 @@ public:
 	void loadSilhouette(const QString& filename);
 	void saveSilhouette(const QString& filename);
 	void undo();
-	void computeVanishingPoint();
 	void computeCameraMatrix();
 	//void reconstruct3DAll();
 	//std::vector<float> reconstruct3D();
