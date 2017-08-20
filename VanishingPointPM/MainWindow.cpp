@@ -28,9 +28,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionOpenImage, SIGNAL(triggered()), this, SLOT(onOpenImage()));
 	connect(ui.actionClearLines, SIGNAL(triggered()), this, SLOT(onClearLines()));
 	connect(ui.actionLoadLines, SIGNAL(triggered()), this, SLOT(onLoadLines()));
+	connect(ui.actionLoadLinesOld, SIGNAL(triggered()), this, SLOT(onLoadLinesOld()));
 	connect(ui.actionSaveLines, SIGNAL(triggered()), this, SLOT(onSaveLines()));
 	connect(ui.actionClearSilhouette, SIGNAL(triggered()), this, SLOT(onClearSilhouette()));
 	connect(ui.actionLoadSilhouette, SIGNAL(triggered()), this, SLOT(onLoadSilhouette()));
+	connect(ui.actionLoadSilhouetteOld, SIGNAL(triggered()), this, SLOT(onLoadSilhouetteOld()));
 	connect(ui.actionSaveSilhouette, SIGNAL(triggered()), this, SLOT(onSaveSilhouette()));
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
 	connect(ui.actionUndo, SIGNAL(triggered()), this, SLOT(onUndo()));
@@ -84,6 +86,13 @@ void MainWindow::onLoadLines() {
 	glWidget->loadLines(filename);
 }
 
+void MainWindow::onLoadLinesOld() {
+	QString filename = QFileDialog::getOpenFileName(this, tr("Open lines..."), "", tr("Line Files (*.txt)"));
+	if (filename.isEmpty()) return;
+
+	glWidget->loadLinesOld(filename);
+}
+
 void MainWindow::onSaveLines() {
 	QString filename = QFileDialog::getSaveFileName(this, tr("Save lines..."), "", tr("Line Files (*.txt)"));
 	if (filename.isEmpty()) return;
@@ -100,6 +109,13 @@ void MainWindow::onLoadSilhouette() {
 	if (filename.isEmpty()) return;
 
 	glWidget->loadSilhouette(filename);
+}
+
+void MainWindow::onLoadSilhouetteOld() {
+	QString filename = QFileDialog::getOpenFileName(this, tr("Open silhouette..."), "", tr("Silhoutte Files (*.ctr)"));
+	if (filename.isEmpty()) return;
+
+	glWidget->loadSilhouetteOld(filename);
 }
 
 void MainWindow::onSaveSilhouette() {

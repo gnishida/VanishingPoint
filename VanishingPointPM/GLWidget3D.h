@@ -71,9 +71,11 @@ public:
 	void loadImage(const QString& filename);
 	void clearLines();
 	void loadLines(const QString& filename);
+	void loadLinesOld(const QString& filename);
 	void saveLines(const QString& filename);
 	void clearSilhouette();
 	void loadSilhouette(const QString& filename);
+	void loadSilhouetteOld(const QString& filename);
 	void saveSilhouette(const QString& filename);
 	void undo();
 	void computeCameraMatrix();

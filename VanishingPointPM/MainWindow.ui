@@ -32,10 +32,12 @@
     <addaction name="separator"/>
     <addaction name="actionClearLines"/>
     <addaction name="actionLoadLines"/>
+    <addaction name="actionLoadLinesOld"/>
     <addaction name="actionSaveLines"/>
     <addaction name="separator"/>
     <addaction name="actionClearSilhouette"/>
     <addaction name="actionLoadSilhouette"/>
+    <addaction name="actionLoadSilhouetteOld"/>
     <addaction name="actionSaveSilhouette"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
@@ -255,6 +257,16 @@
    </property>
    <property name="text">
     <string>SSAO</string>
+   </property>
+  </action>
+  <action name="actionLoadSilhouetteOld">
+   <property name="text">
+    <string>Load Silhouette Old</string>
+   </property>
+  </action>
+  <action name="actionLoadLinesOld">
+   <property name="text">
+    <string>Load Lines Old</string>
    </property>
   </action>
  </widget>

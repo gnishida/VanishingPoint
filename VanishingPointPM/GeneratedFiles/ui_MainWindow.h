@@ -51,6 +51,8 @@ public:
     QAction *actionGrammarMass;
     QAction *actionGrammarFacade;
     QAction *actionRenderingSSAO;
+    QAction *actionLoadSilhouetteOld;
+    QAction *actionLoadLinesOld;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menuFile;
@@ -125,6 +127,10 @@ public:
         actionRenderingSSAO = new QAction(MainWindowClass);
         actionRenderingSSAO->setObjectName(QStringLiteral("actionRenderingSSAO"));
         actionRenderingSSAO->setCheckable(true);
+        actionLoadSilhouetteOld = new QAction(MainWindowClass);
+        actionLoadSilhouetteOld->setObjectName(QStringLiteral("actionLoadSilhouetteOld"));
+        actionLoadLinesOld = new QAction(MainWindowClass);
+        actionLoadLinesOld->setObjectName(QStringLiteral("actionLoadLinesOld"));
         centralWidget = new QWidget(MainWindowClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         MainWindowClass->setCentralWidget(centralWidget);
@@ -159,10 +165,12 @@ public:
         menuFile->addSeparator();
         menuFile->addAction(actionClearLines);
         menuFile->addAction(actionLoadLines);
+        menuFile->addAction(actionLoadLinesOld);
         menuFile->addAction(actionSaveLines);
         menuFile->addSeparator();
         menuFile->addAction(actionClearSilhouette);
         menuFile->addAction(actionLoadSilhouette);
+        menuFile->addAction(actionLoadSilhouetteOld);
         menuFile->addAction(actionSaveSilhouette);
         menuFile->addSeparator();
         menuFile->addAction(actionExit);
@@ -224,6 +232,8 @@ public:
         actionGrammarMass->setText(QApplication::translate("MainWindowClass", "Building Mass", 0));
         actionGrammarFacade->setText(QApplication::translate("MainWindowClass", "Facade", 0));
         actionRenderingSSAO->setText(QApplication::translate("MainWindowClass", "SSAO", 0));
+        actionLoadSilhouetteOld->setText(QApplication::translate("MainWindowClass", "Load Silhouette Old", 0));
+        actionLoadLinesOld->setText(QApplication::translate("MainWindowClass", "Load Lines Old", 0));
         menuFile->setTitle(QApplication::translate("MainWindowClass", "File", 0));
         menuEdit->setTitle(QApplication::translate("MainWindowClass", "Edit", 0));
         menuTool->setTitle(QApplication::translate("MainWindowClass", "Tool", 0));

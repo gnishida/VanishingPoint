@@ -22,9 +22,11 @@ public slots:
 	void onOpenImage();
 	void onClearLines();
 	void onLoadLines();
+	void onLoadLinesOld();
 	void onSaveLines();
 	void onClearSilhouette();
 	void onLoadSilhouette();
+	void onLoadSilhouetteOld();
 	void onSaveSilhouette();
 	void onUndo();
 	void onComputeCameraMatrix();

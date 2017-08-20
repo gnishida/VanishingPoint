@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <grammar type="building" version="1.0" author="Gen Nishida">
 	<!-- parameters -->
-	<attr name="corner_cut_length" value="4" range="2,14"/>
-	<attr name="depth" value="15" range="15,40"/>
-	<attr name="height" value="10" range="5,40"/>
+	<attr name="corner_cut_length" value="4" range="1,14"/>
+	<attr name="depth" value="15" range="1,40"/>
+	<attr name="height" value="10" range="1,40"/>
 	<attr name="roof_height" value="1" range="0,2"/>
 	<attr name="roof_overhang" value="0.5" range="0,1.5"/>
-	<attr name="width" value="15" range="15,42"/>
+	<attr name="width" value="15" range="1,42"/>
 	
 	<rule name="Start">
 		<translate mode="rel" coordSystem="world">

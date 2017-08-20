@@ -402,6 +402,36 @@ void GLWidget3D::loadLines(const QString& filename) {
 	update();
 }
 
+void GLWidget3D::loadLinesOld(const QString& filename) {
+	lines.clear();
+
+	QFile file(filename);
+	if (file.open(QIODevice::ReadOnly)) {
+		QTextStream in(&file);
+
+		while (true) {
+			QString line = in.readLine();
+			if (line.isNull()) break;
+			QStringList list = line.split(QRegExp("(\t| )"));
+
+			if (list.size() == 2) {
+				origin = glm::dvec2((list[0].toFloat() - 400.0f) / 800.0f, (list[1].toFloat() - 400.0f) / 800.0f);
+			}
+			else {
+				glm::dvec2 start((list[0].toFloat() - 400.0f) / 800.0f, (list[1].toFloat() - 400.0f) / 800.0f);
+				glm::dvec2 end((list[2].toFloat() - 400.0f) / 800.0f, (list[3].toFloat() - 400.0f) / 800.0f);
+				if (start != end) {
+					lines.push_back(vp::VanishingLine(start.x, start.y, end.x, end.y, list[4].toInt()));
+				}
+			}
+		}
+
+		file.close();
+	}
+
+	update();
+}
+
 void GLWidget3D::saveLines(const QString& filename) {
 	QFile file(filename);
 	if (file.open(QIODevice::WriteOnly)) {
@@ -434,6 +464,32 @@ void GLWidget3D::loadSilhouette(const QString& filename) {
 
 			glm::dvec2 start(list[0].toFloat(), list[1].toFloat());
 			glm::dvec2 end(list[2].toFloat(), list[3].toFloat());
+			if (start != end) {
+				silhouette.push_back(vp::VanishingLine(start.x, start.y, end.x, end.y, list[4].toInt()));
+			}
+		}
+
+		file.close();
+	}
+
+	update();
+}
+
+void GLWidget3D::loadSilhouetteOld(const QString& filename) {
+	silhouette.clear();
+
+	QFile file(filename);
+	if (file.open(QIODevice::ReadOnly)) {
+		QTextStream in(&file);
+
+		while (true) {
+			QString line = in.readLine();
+			if (line.isNull()) break;
+			QStringList list = line.split(QRegExp("(\t| )"));
+
+			glm::dvec2 start((list[0].toFloat() - 400.0f) / 800.0f, (list[1].toFloat() - 400.0f) / 800.0f);
+			glm::dvec2 end((list[2].toFloat() - 400.0f) / 800.0f, (list[3].toFloat() - 400.0f) / 800.0f);
+
 			if (start != end) {
 				silhouette.push_back(vp::VanishingLine(start.x, start.y, end.x, end.y, list[4].toInt()));
 			}
@@ -478,8 +534,8 @@ void GLWidget3D::computeCameraMatrix() {
 
 	// convert the coordinates of vp to [-1, 1]
 	for (int i = 0; i < vps.size(); ++i) {
-		vps[i].x = vps[i].x / width() * 2.0 - 1;
-		vps[i].y = 1 - vps[i].y / height() * 2.0;
+		vps[i].x = vps[i].x * 2.0;
+		vps[i].y = -vps[i].y * 2.0;
 	}
 
 	double f, xrot, yrot, zrot;
@@ -492,7 +548,7 @@ void GLWidget3D::computeCameraMatrix() {
 	// compute T matrix
 	glm::dvec3 T;
 	double camera_distance = camera.distanceBase / tan(vp::deg2rad(camera.fovy * 0.5));
-	vp::extractCameraMatrixT(f, glm::vec2(origin.x / width() * 2 - 1, 1 - origin.y / height() * 2) - camera.center, camera_distance, T);
+	vp::extractCameraMatrixT(f, glm::vec2(origin.x * 2, -origin.y * 2) - camera.center, camera_distance, T);
 	camera.pos = glm::vec3(-T.x, -T.y, -T.z);
 
 	// update camera
@@ -1241,19 +1297,19 @@ void GLWidget3D::paintEvent(QPaintEvent *event) {
 		else {
 			painter.setPen(QPen(verticalColor, lineWidth));
 		}
-		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
+		painter.drawLine(line.start.x * 800.0f + 400.0f, line.start.y * 800.0f + 400.0f, line.end.x * 800.0f + 400.0f, line.end.y * 800.0f + 400.0f);
 	}
 
 	// draw silhouette
 	painter.setPen(QPen(silhouetteColor, silhouetteWidth));
 	for (auto line : silhouette) {
-		painter.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
+		painter.drawLine(line.start.x * 800.0f + 400.0f, line.start.y * 800.0f + 400.0f, line.end.x * 800.0f + 400.0f, line.end.y * 800.0f + 400.0f);
 	}
 
 	// draw origin
 	painter.setPen(QPen(QColor(255, 255, 0), 1, Qt::SolidLine));
 	painter.setBrush(QBrush(QColor(255, 255, 0)));
-	painter.drawEllipse(origin.x - 3, origin.y - 3, 7, 7);
+	painter.drawEllipse(origin.x * 800.0f + 400.0f - 3, origin.y * 800.0f + 400.0f - 3, 7, 7);
 
 	// draw the center of the building
 	glm::vec2 pp = vp::projectPoint(camera.mvpMatrix, glm::dvec3(0, 0, 0));
@@ -1277,32 +1333,22 @@ void GLWidget3D::mousePressEvent(QMouseEvent *e) {
 	}
 	else if (e->buttons() & Qt::LeftButton) { // draw lines
 		if (ctrlPressed) {
-			origin = glm::vec2(e->x(), e->y());
+			origin = glm::vec2((e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f);
 		}
 		else {
-			if (shiftPressed) {
-				if (pen_type == PEN_TYPE_VANISHING_LINE) {
-					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_RIGHT));
+			if (pen_type == PEN_TYPE_VANISHING_LINE) {
+				if (shiftPressed) {
+					lines.push_back(vp::VanishingLine((e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f, (e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f, vp::VanishingLine::TYPE_HORIZONTAL_RIGHT));
 				}
-				else if (pen_type == PEN_TYPE_SILHOUETTE) {
-					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_RIGHT));
+				else if (altPressed) {
+					lines.push_back(vp::VanishingLine((e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f, (e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f, vp::VanishingLine::TYPE_VERTICAL));
 				}
-			}
-			else if (altPressed) {
-				if (pen_type == PEN_TYPE_VANISHING_LINE) {
-					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_VERTICAL));
-				}
-				else if (pen_type == PEN_TYPE_SILHOUETTE) {
-					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_VERTICAL));
+				else {
+					lines.push_back(vp::VanishingLine((e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f, (e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f, vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
 				}
 			}
-			else {
-				if (pen_type == PEN_TYPE_VANISHING_LINE) {
-					lines.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
-				}
-				else if (pen_type == PEN_TYPE_SILHOUETTE) {
-					silhouette.push_back(vp::VanishingLine(e->x(), e->y(), e->x(), e->y(), vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
-				}
+			else if (pen_type == PEN_TYPE_SILHOUETTE) {
+				silhouette.push_back(vp::VanishingLine((e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f, (e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f, vp::VanishingLine::TYPE_HORIZONTAL_LEFT));
 			}
 		}
 		update();
@@ -1327,12 +1373,12 @@ void GLWidget3D::mouseMoveEvent(QMouseEvent *e) {
 	else if (e->buttons() & Qt::LeftButton) { // draw lines
 		if (pen_type == PEN_TYPE_VANISHING_LINE) {
 			if (lines.size() > 0) {
-				lines.back().end = glm::vec2(e->x(), e->y());
+				lines.back().end = glm::vec2((e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f);
 			}
 		}
 		else if (pen_type == PEN_TYPE_SILHOUETTE) {
 			if (silhouette.size() > 0) {
-				silhouette.back().end = glm::vec2(e->x(), e->y());
+				silhouette.back().end = glm::vec2((e->x() - 400.0f) / 800.0f, (e->y() - 400.0f) / 800.0f);
 			}
 		}
 	}
